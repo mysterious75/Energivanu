@@ -3,7 +3,7 @@ ENERGIVANU — Time-Series Transformer
 Dual branch: Time (Transformer) + Frequency (FFT) → Power + Signal
 """
 
-import torch, torch.nn as nn, math
+import torch, torch.nn as nn, torch.nn.functional as F, math
 from typing import Tuple
 from src.config import ModelConfig
 
@@ -29,7 +29,7 @@ class GRN(nn.Module):
         self.norm = nn.LayerNorm(do); self.d = nn.Dropout(drop)
     def forward(self, x):
         r = self.skip(x)
-        h = self.d(torch.elu(self.fc1(x)))
+        h = self.d(F.elu(self.fc1(x)))
         h = self.d(self.fc2(h))
         g = torch.sigmoid(self.gate(x))
         return self.norm(r + g*h)

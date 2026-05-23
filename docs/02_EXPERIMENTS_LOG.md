@@ -1,0 +1,80 @@
+
+EXPERIMENTS LOG — EVERYTHING WE TRIED
+======================================
+
+EXPERIMENT 1 — FIRST WORKING MODEL
+  Config:
+    days=15, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=16, epochs=30
+    lr=1e-4, wd=1e-5, dropout=0.1
+  Data: Original smooth generator (no sync spikes)
+  Result: MAE=5.12, SigAcc=90.9%, DirAcc=0.50
+  Problem: CRITICAL count = 0 (thresholds 85/70 too high for data)
+  Verdict: ✅ BEST RUN SO FAR, but no crisis events learned
+
+EXPERIMENT 2 — LARGE MODEL (Kaggle, T4x2)
+  Config:
+    days=30, d_model=256, layers=6, heads=8, d_ff=1024
+    lookback=120, horizon=120, batch=16, epochs=60
+    lr=5e-5, wd=1e-4, dropout=0.2
+  Data: Original smooth generator
+  Result: Val loss kept increasing, MAE=5.62 (epoch 10 best)
+  Problem: Overfitting from epoch 1, early stop at epoch 12
+  Verdict: ❌ Large model on limited data overfits
+
+EXPERIMENT 2b — LARGE MODEL + MORE DATA
+  Config: Same as exp2, data=30 days
+  Result: Same overfitting. 414K samples not enough for 6.5M params
+  Verdict: ❌ Needs better regularization
+
+EXPERIMENT 3 — LARGE MODEL + REGULARIZATION
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=16, epochs=60
+    lr=5e-5, wd=1e-4, dropout=0.2, patience=15
+  Data: Original smooth generator
+  Result: MAE=5.12 best, Val loss still increasing
+  Problem: Overfitting at smaller scale too
+  Verdict: ⚠️ Data is too predictable (smooth), model memorizes noise
+
+EXPERIMENT 4 — SYNC SPIKES ADDED
+  Config: Same as exp3
+  Data: Generator with synchronized job-start spikes (0.4-0.6 util)
+  Result: MAE=10.83, SigAcc=70.8%
+  Problem: Data became UNPREDICTABLE (random spike timing/duration)
+  Verdict: ❌ Model can't learn random events
+
+EXPERIMENT 4b — LARGE BATCH (512) + SYNC SPIKES
+  Config:
+    batch=512, d_model=192, layers=4, d_ff=768
+    Data: Sync spikes
+  Result: MAE=13.14, SigAcc=70.0%, epoch time=38s
+  Problem: Large batch → sharp minima → poor generalization
+  Verdict: ❌ batch=512 hurts generalization
+
+EXPERIMENT 5 — SMALL BATCH (64) + ANTIOVERFIT + SYNC SPIKES
+  Config:
+    batch=64, d_model=256, layers=6, dropout=0.4
+  Data: Sync spikes
+  Result: MAE=9.90, SigAcc=70.3%, epoch time=156s
+  Problem: Val loss still increasing from epoch 1
+  Verdict: ❌ Model still can't learn random sync spikes
+
+EXPERIMENT 6 — BACK TO SMOOTH DATA + LOWER THRESHOLDS [CURRENT]
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=128, epochs=80
+    lr=1e-4, wd=3e-4, dropout=0.35
+    DataParallel ON (2x T4), patience=0 (no early stop)
+  Data: Original smooth generator (sync spikes REMOVED)
+  Thresholds: critical=55, warning=45 (LOWERED for realistic events)
+  Status: RUNNING NOW (Kaggle)
+  Expected: MAE ~5-6 MW with ~30-40% critical events
+  Verdict: 🏁 CURRENT BEST APPROACH
+
+GPU UTILIZATION EXPERIMENTS:
+  - batch=16, 1 GPU → GPU 30%, epoch 9min
+  - batch=256, 1 GPU → GPU 80%, epoch 48s  
+  - batch=256, DataParallel 2 GPU → each 60%, epoch 38s
+  - batch=64, 1 GPU → GPU 50%, epoch 160s
+  - batch=128, DataParallel 2 GPU → each 50-60%, epoch 45s [CURRENT]

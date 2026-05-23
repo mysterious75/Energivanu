@@ -8,6 +8,25 @@ from typing import Tuple
 from src.config import ModelConfig
 
 
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, max_len=5000, dropout=0.1):
+        super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        pe = torch.zeros(max_len, d_model)
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = torch.sin(position * div_term)
+        if d_model % 2 == 0:
+            pe[:, 1::2] = torch.cos(position * div_term)
+        else:
+            pe[:, 1::2] = torch.cos(position * div_term[:-1])
+        pe = pe.unsqueeze(0)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        return self.dropout(x + self.pe[:, :x.size(1), :])
+
+
 class PatchEmbed(nn.Module):
     def __init__(self, nf, dm, ps=10):
         super().__init__()
@@ -51,7 +70,7 @@ class ColossusTransformer(nn.Module):
         np_ = cfg.lookback // cfg.patch_size
 
         self.patch = PatchEmbed(cfg.num_features, cfg.d_model, cfg.patch_size)
-        self.pos = nn.Parameter(torch.randn(1, np_, cfg.d_model)*0.02)
+        self.pos_enc = PositionalEncoding(cfg.d_model, np_ + cfg.horizon, cfg.dropout)
         el = nn.TransformerEncoderLayer(
             cfg.d_model, cfg.n_heads, cfg.d_ff, cfg.dropout,
             batch_first=True, activation="gelu", norm_first=True)
@@ -79,7 +98,8 @@ class ColossusTransformer(nn.Module):
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
     def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor]:
-        h = self.patch(x) + self.pos
+        h = self.patch(x)
+        h = self.pos_enc(h)
         h = self.enc(h).mean(1)
         if self.freq and self.fgate:
             hf = self.freq(x[:,:,0])

@@ -51,7 +51,7 @@ class Trainer:
                 n+=1
         return {k:v/max(n,1) for k,v in s.items()}
 
-    def fit(self, Xtr,Ytr,Str,Xvl,Yvl,Svl):
+    def fit(self, Xtr,Ytr,Str,Xvl,Yvl,Svl, drive_dir=None, save_every=5):
         tc = self.cfg.train
         tds = TensorDataset(torch.FloatTensor(Xtr),torch.FloatTensor(Ytr),torch.LongTensor(Str))
         vds = TensorDataset(torch.FloatTensor(Xvl),torch.FloatTensor(Yvl),torch.LongTensor(Svl))
@@ -60,6 +60,8 @@ class Trainer:
 
         total = len(tdl)*tc.epochs; best=float("inf"); wait=0
         Path("checkpoints").mkdir(exist_ok=True)
+        if drive_dir:
+            Path(drive_dir).mkdir(parents=True, exist_ok=True)
 
         print(f"\n  Device: {self.dev} | Train: {len(tds):,} | Val: {len(vds):,}")
         print(f"  Batch: {tc.batch_size} | Epochs: {tc.epochs}\n")
@@ -82,10 +84,18 @@ class Trainer:
 
             if vm["loss"]<best:
                 best=vm["loss"]; wait=0
+                ckpt = {"ep":ep,"model":self.model.state_dict(),
+                        "opt":self.opt.state_dict(),"vl":best}
+                torch.save(ckpt, "checkpoints/best.pt")
+                if drive_dir:
+                    torch.save(ckpt, f"{drive_dir}/best.pt")
+
+            if drive_dir and ep % save_every == 0:
                 torch.save({"ep":ep,"model":self.model.state_dict(),
-                            "opt":self.opt.state_dict(),"vl":best},
-                           "checkpoints/best.pt")
-            else:
+                            "opt":self.opt.state_dict(),"vl":vm["loss"]},
+                           f"{drive_dir}/checkpoint_ep{ep}.pt")
+
+            if vm["loss"]>=best:
                 wait+=1
                 if wait>=tc.patience:
                     print(f"\n  Early stop at {ep}"); break

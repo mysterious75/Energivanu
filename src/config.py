@@ -61,8 +61,8 @@ class TrainConfig:
 
 @dataclass
 class SignalConfig:
-    critical_mw: float = 85.0
-    warning_mw: float = 70.0
+    critical_mw: float = 55.0
+    warning_mw: float = 45.0
 
 
 @dataclass

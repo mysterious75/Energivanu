@@ -8,18 +8,18 @@ warnings.filterwarnings("ignore")
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
-D_MODEL = 256
-N_LAYERS = 6
-N_HEADS = 8
-D_FF = 1024
-LOOKBACK = 120
-HORIZON = 120
-BATCH_SIZE = 64
-EPOCHS = 100
-PATIENCE = 30
+D_MODEL = 128
+N_LAYERS = 3
+N_HEADS = 4
+D_FF = 512
+LOOKBACK = 60
+HORIZON = 60
+BATCH_SIZE = 32
+EPOCHS = 80
+PATIENCE = 20
 LR = 1e-4
-WEIGHT_DECAY = 2e-4
-DROPOUT = 0.4
+WEIGHT_DECAY = 1e-5
+DROPOUT = 0.2
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 

@@ -51,7 +51,7 @@ class Trainer:
                 n+=1
         return {k:v/max(n,1) for k,v in s.items()}
 
-    def fit(self, Xtr,Ytr,Str,Xvl,Yvl,Svl, drive_dir=None, save_every=5):
+    def fit(self, Xtr,Ytr,Str,Xvl,Yvl,Svl, drive_dir=None, save_every=5, resume_from=0):
         tc = self.cfg.train
         tds = TensorDataset(torch.FloatTensor(Xtr),torch.FloatTensor(Ytr),torch.LongTensor(Str))
         vds = TensorDataset(torch.FloatTensor(Xvl),torch.FloatTensor(Yvl),torch.LongTensor(Svl))
@@ -63,10 +63,15 @@ class Trainer:
         if drive_dir:
             Path(drive_dir).mkdir(parents=True, exist_ok=True)
 
-        print(f"\n  Device: {self.dev} | Train: {len(tds):,} | Val: {len(vds):,}")
-        print(f"  Batch: {tc.batch_size} | Epochs: {tc.epochs}\n")
+        start_ep = resume_from + 1
+        if resume_from > 0:
+            self.hist = {"tl":[],"vl":[],"vm":[],"vs":[]}
+            print(f"\n  Resuming from epoch {start_ep}...")
 
-        for ep in range(1,tc.epochs+1):
+        print(f"\n  Device: {self.dev} | Train: {len(tds):,} | Val: {len(vds):,}")
+        print(f"  Batch: {tc.batch_size} | Epochs: {tc.epochs} (remaining: {tc.epochs-resume_from})\n")
+
+        for ep in range(start_ep, tc.epochs+1):
             t0=time.time()
             tm=self._epoch(tdl,True,total)
             vm=self._epoch(vdl,False)

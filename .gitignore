@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-data/
+/data/
 checkpoints/
 .env
 .ipynb_checkpoints/

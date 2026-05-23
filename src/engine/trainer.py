@@ -15,6 +15,11 @@ class Trainer:
     def __init__(self, model, cfg: Config):
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.dev)
+        self.is_parallel = False
+        if torch.cuda.device_count() > 1:
+            self.model = nn.DataParallel(self.model)
+            self.is_parallel = True
+            print(f"  DataParallel: {torch.cuda.device_count()} GPUs")
         self.cfg = cfg
         self.loss_fn = SpikeLoss(cfg.train.under_w, cfg.train.over_w,
                                   cfg.train.spike_std, cfg.train.cls_w)
@@ -22,6 +27,7 @@ class Trainer:
                                       weight_decay=cfg.train.weight_decay, betas=(0.9,0.98))
         self.step = 0
         self.hist = {"tl":[],"vl":[],"vm":[],"vs":[]}
+        self._model = model  # keep unwrapped reference
 
     def _lr(self, cur, total):
         c = self.cfg.train
@@ -55,8 +61,8 @@ class Trainer:
         tc = self.cfg.train
         tds = TensorDataset(torch.FloatTensor(Xtr),torch.FloatTensor(Ytr),torch.LongTensor(Str))
         vds = TensorDataset(torch.FloatTensor(Xvl),torch.FloatTensor(Yvl),torch.LongTensor(Svl))
-        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=0, pin_memory=True)
-        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=0, pin_memory=True)
+        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
         total = len(tdl)*tc.epochs; best=float("inf"); wait=0
         Path("checkpoints").mkdir(exist_ok=True)
@@ -89,15 +95,15 @@ class Trainer:
 
             if vm["loss"]<best:
                 best=vm["loss"]; wait=0
-                ckpt = {"ep":ep,"model":self.model.state_dict(),
-                        "opt":self.opt.state_dict(),"vl":best}
+                sd = self._model.state_dict() if self.is_parallel else self.model.state_dict()
+                ckpt = {"ep":ep,"model":sd,"opt":self.opt.state_dict(),"vl":best}
                 torch.save(ckpt, "checkpoints/best.pt")
                 if drive_dir:
                     torch.save(ckpt, f"{drive_dir}/best.pt")
 
             if drive_dir and ep % save_every == 0:
-                torch.save({"ep":ep,"model":self.model.state_dict(),
-                            "opt":self.opt.state_dict(),"vl":vm["loss"]},
+                sd = self._model.state_dict() if self.is_parallel else self.model.state_dict()
+                torch.save({"ep":ep,"model":sd,"opt":self.opt.state_dict(),"vl":vm["loss"]},
                            f"{drive_dir}/checkpoint_ep{ep}.pt")
 
             if vm["loss"]>=best:

@@ -28,7 +28,15 @@ class GPUData:
             dur = np.random.randint(6, 60)
             spikes[i:min(i+dur, n)] = np.random.uniform(0.1, 0.3)
 
-        util = np.clip(base + spikes, 0.2, 1.0)
+        sync = np.zeros(n)
+        sync_idx = np.random.choice(range(200, n-300), size=n//500, replace=False)
+        for i in sync_idx:
+            dur = np.random.randint(30, 180)
+            sync[i:min(i+dur, n)] = np.random.uniform(0.4, 0.6)
+            if i+60 < n:
+                sync[i:min(i+60, n)] = np.linspace(0, sync[i], min(60, n-i))
+
+        util = np.clip(base + spikes + sync, 0.2, 1.4)
         idle = self.c.num_gpus * self.c.gpu_idle_watts / 1e6
         dyn = self.c.num_gpus * (self.c.gpu_tdp_watts - self.c.gpu_idle_watts) / 1e6
         power = idle + dyn * util**1.3

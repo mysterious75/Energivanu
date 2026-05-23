@@ -19,18 +19,18 @@ if os.path.exists("/content"):
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
-D_MODEL = 256
-N_LAYERS = 6
-N_HEADS = 8
-D_FF = 1024
+D_MODEL = 192
+N_LAYERS = 4
+N_HEADS = 6
+D_FF = 768
 LOOKBACK = 120
 HORIZON = 120
 BATCH_SIZE = 16
-EPOCHS = 60
-PATIENCE = 15
-LR = 5e-5
-WEIGHT_DECAY = 1e-4
-DROPOUT = 0.2
+EPOCHS = 80
+PATIENCE = 25
+LR = 3e-5
+WEIGHT_DECAY = 3e-4
+DROPOUT = 0.35
 
 # ─── Paths (Drive first, else Kaggle local) ────────────────────────
 BASE = DRIVE_BASE or "/kaggle/working/energivanu_prod"

@@ -61,8 +61,8 @@ class Trainer:
         tc = self.cfg.train
         tds = TensorDataset(torch.FloatTensor(Xtr),torch.FloatTensor(Ytr),torch.LongTensor(Str))
         vds = TensorDataset(torch.FloatTensor(Xvl),torch.FloatTensor(Yvl),torch.LongTensor(Svl))
-        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=8, pin_memory=True, prefetch_factor=4)
+        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=8, pin_memory=True, prefetch_factor=4)
 
         total = len(tdl)*tc.epochs; best=float("inf"); wait=0
         Path("checkpoints").mkdir(exist_ok=True)

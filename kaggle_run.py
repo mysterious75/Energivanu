@@ -18,7 +18,7 @@ if os.path.exists("/content"):
         pass
 
 # ─── Config ────────────────────────────────────────────────────────
-DAYS = 60
+DAYS = 30
 D_MODEL = 256
 N_LAYERS = 6
 N_HEADS = 8

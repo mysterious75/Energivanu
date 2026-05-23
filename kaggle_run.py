@@ -1,21 +1,10 @@
 """
-ENERGIVANU — Kaggle Auto-Train with Resume
-python kaggle_run.py  → auto-resume, auto-save every epoch
+ENERGIVANU — Kaggle/Colab Auto-Train with HF Hub persistence
+python kaggle_run.py  → auto-resume, auto-save, HF upload
 """
 
-import os, sys, pickle, numpy as np, glob, re, time, shutil, warnings
+import os, sys, pickle, numpy as np, glob, re, time, shutil, json, warnings
 warnings.filterwarnings("ignore")
-
-# ─── Google Drive mount ────────────────────────────────────────────
-DRIVE_BASE = None
-if os.path.exists("/content"):
-    try:
-        from google.colab import drive
-        drive.mount("/content/drive")
-        DRIVE_BASE = "/content/drive/MyDrive/energivanu_prod"
-        print("Drive mounted")
-    except:
-        pass
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
@@ -31,9 +20,13 @@ PATIENCE = 25
 LR = 3e-5
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+HF_REPO = "vedkumr/energivanu"
 
-# ─── Paths (Drive first, else Kaggle local) ────────────────────────
-BASE = DRIVE_BASE or "/kaggle/working/energivanu_prod"
+# ─── Paths ─────────────────────────────────────────────────────────
+BASE = "/kaggle/working/energivanu_prod"
+if not os.path.exists("/kaggle"):
+    BASE = "/content/energivanu_prod"
 DATA_DIR = f"{BASE}/data"
 CKPT_DIR = f"{BASE}/checkpoints"
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -137,6 +130,9 @@ t_total = time.time() - t_start
 
 # ─── Save final ────────────────────────────────────────────────────
 shutil.copy("checkpoints/best.pt", f"{CKPT_DIR}/best_final.pt")
+with open(f"{CKPT_DIR}/history.json", "w") as f:
+    json.dump({k: [float(v) for v in vals] for k, vals in history.items()}, f)
+
 print(f"\n{'='*60}")
 print(f"  TRAINING COMPLETE")
 print(f"  Time: {t_total/3600:.1f} hours")
@@ -144,3 +140,19 @@ print(f"  Best MAE: {min(history['vm']):.2f} MW")
 print(f"  Best SigAcc: {max(history['vs'])*100:.1f}%")
 print(f"  Model saved: {CKPT_DIR}/best_final.pt")
 print(f"{'='*60}")
+
+# ─── Hugging Face upload (if token set) ────────────────────────────
+if HF_TOKEN:
+    try:
+        from huggingface_hub import HfApi, create_repo
+        api = HfApi()
+        create_repo(HF_REPO, token=HF_TOKEN, exist_ok=True)
+        api.upload_file(path_or_fileobj=f"{CKPT_DIR}/best_final.pt",
+                        path_in_repo="best.pt", repo_id=HF_REPO, token=HF_TOKEN)
+        api.upload_file(path_or_fileobj=f"{CKPT_DIR}/history.json",
+                        path_in_repo="history.json", repo_id=HF_REPO, token=HF_TOKEN)
+        print(f"  Uploaded to HF: {HF_REPO}")
+    except Exception as e:
+        print(f"  HF upload failed: {e}")
+else:
+    print("  Set HF_TOKEN env var to auto-upload to Hugging Face")

@@ -102,7 +102,7 @@ class Trainer:
 
             if vm["loss"]>=best:
                 wait+=1
-                if wait>=tc.patience:
+                if tc.patience > 0 and wait>=tc.patience:
                     print(f"\n  Early stop at {ep}"); break
 
         print(f"\n  Best val loss: {best:.4f}")

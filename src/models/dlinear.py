@@ -9,16 +9,14 @@ class DLinear(nn.Module):
         nf = cfg.num_features
         lb = cfg.lookback
         hz = cfg.horizon
-        inp = lb * nf
 
         self.kernel = 25
         self.pad = self.kernel // 2
-        self.avg = nn.AvgPool1d(self.kernel, 1, padding=self.pad)
 
-        self.trend = nn.Linear(inp, hz)
-        self.seasonal = nn.Linear(inp, hz)
-        self.shead = nn.Linear(inp, cfg.n_classes)
-        self.dir_head = nn.Linear(inp, 2)
+        self.trend_l = nn.Linear(lb, hz)
+        self.seasonal_l = nn.Linear(lb, hz)
+        self.shead = nn.Sequential(nn.Linear(lb, 64), nn.ReLU(), nn.Linear(64, cfg.n_classes))
+        self.dir_head = nn.Sequential(nn.Linear(lb, 64), nn.ReLU(), nn.Linear(64, 2))
 
         self._init()
         print(f"  DLinear Params: {sum(p.numel() for p in self.parameters()):,}")
@@ -32,12 +30,13 @@ class DLinear(nn.Module):
 
     def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         B, T, F = x.shape
-        x_flat = x.reshape(B, T * F)
 
-        x_t = x_flat.unsqueeze(1)
-        trend_part = self.avg(x_t).squeeze(1)
-        seasonal_part = x_flat - trend_part
+        x_t = x.transpose(1, 2)
+        x_p = F.pad(x_t, (self.pad, self.pad), mode="reflect")
+        trend = F.avg_pool1d(x_p, self.kernel, stride=1)
+        seasonal = x_t - trend
 
-        power = self.trend(trend_part) + self.seasonal(seasonal_part)
-        signal = self.shead(x_flat)
-        return power, signal, self.dir_head(x_flat)
+        pp = self.trend_l(trend) + self.seasonal_l(seasonal)
+        pw = pp[:, 0, :]
+
+        return pw, self.shead(x[:, :, 0]), self.dir_head(x[:, :, 0])

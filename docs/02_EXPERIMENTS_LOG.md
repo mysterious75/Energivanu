@@ -71,19 +71,25 @@ EXPERIMENT 6 — SMOOTH DATA + LOWER THRESHOLDS
   Problem: Overfitting from ep10, SigAcc worse than ep1 (71.3%)
   Verdict: ❌ Smooth data memorized, low thresholds confused classifier
 
-EXPERIMENT 7 — TRANSFORMER + DIRECTION LOSS + PATTERN SPIKES [CURRENT]
+EXPERIMENT 7 — PATTERN SPIKES + THRESHOLDS 85/70 [COMPLETED]
   Config:
     days=30, d_model=128, layers=3, heads=4, d_ff=512
     lookback=60, horizon=60, batch=128, epochs=80
     lr=1e-4, wd=3e-4, dropout=0.35, dir_w=0.3
-    DataParallel ON (2x T4), patience=0
-    thresholds=85/70 (restored)
+    DataParallel ON (2x T4), patience=0, thresholds=85/70
   Data: Pattern-based spikes (every 4hr + cascading failures)
-  Loss: SpikeLoss + DirectionLoss (sign MSE)
-  Status: WAITING TO RUN (Kaggle)
-  Expected: MAE ~5-6 MW, SigAcc ~85-90%, DirAcc > 55%
-  GPU util: ~50-60% per GPU (batch=128, DP, 2x T4)
-  Epoch time: ~45s | Total: ~1 hour for 80 epochs
+  Loss: SpikeLoss + DirectionLoss sign() [BROKEN — zero gradient]
+  Result: MAE=2.43@ep50, SigAcc=99.1%, DirAcc=50.1%
+  Verdict: ✅ MAE target achieved! SigAcc 99%! But DirAcc still
+           random because torch.sign() has zero gradient.
+           Direction loss was NOT backpropagating.
+  Fix: Replace sign() with cosine_similarity for differentiable DirLoss
+
+EXPERIMENT 7b — DIFFERENTIABLE DIRECTION LOSS [CURRENT]
+  Config: Same as Exp7
+  Loss: SpikeLoss + DirectionLoss (cosine_similarity)
+  Status: READY TO RUN
+  Expected: DirAcc > 55%, rest same as Exp7
   Verdict: 🏁 CURRENT BEST APPROACH
 
 GPU UTILIZATION EXPERIMENTS:

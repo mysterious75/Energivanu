@@ -21,7 +21,8 @@ class SpikeLoss(nn.Module):
 
         pd = pp[:,1:]-pp[:,:-1]
         td = tp[:,1:]-tp[:,:-1]
-        dl = F.mse_loss(pd.sign(), td.sign())
+        cos = F.cosine_similarity(pd, td, dim=-1)
+        dl = (1 - cos).mean()
 
         cw = torch.tensor([1.,2.,5.], device=ps.device)
         sl = F.cross_entropy(ps, ts, weight=cw)

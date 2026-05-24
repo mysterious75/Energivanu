@@ -47,7 +47,7 @@ SAFE_DIR = "/kaggle/working"
 os.chdir(SAFE_DIR)
 if not os.path.exists(REPO):
     print("Cloning repo...")
-    os.system("git clone https://github.com/mysterious75/Energivanu.git")
+    os.system("git clone https://github.com/mysterious75/Energivanu.git " + REPO)
 sys.path.insert(0, REPO)
 os.chdir(REPO)
 

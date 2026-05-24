@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
-MODEL_TYPE = "transformer"
+MODEL_TYPE = "dlinear"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4

@@ -23,10 +23,26 @@ class GPUData:
 
         base = 0.6 + 0.15 * np.sin(2*np.pi*hours/8) + 0.1*np.sin(2*np.pi*hours/24)
         spikes = np.zeros(n)
-        idx = np.random.choice(range(100, n-100), size=n//200, replace=False)
-        for i in idx:
-            dur = np.random.randint(6, 60)
-            spikes[i:min(i+dur, n)] = np.random.uniform(0.1, 0.3)
+
+        if self.s.pattern_spikes:
+            scheduled_hours = np.arange(0, 24, 4)
+            for sh in scheduled_hours:
+                start = int(sh * 3600 / self.s.interval_sec)
+                for offset in range(0, self.s.num_days):
+                    day_start = start + offset * int(24 * 3600 / self.s.interval_sec)
+                    if day_start + 60 < n:
+                        dur = np.random.randint(30, 90)
+                        spikes[day_start:min(day_start+dur, n)] = np.random.uniform(0.2, 0.45)
+            cascade_t = np.random.randint(n // 4, n // 2)
+            cascade_dur = np.random.randint(60, 180)
+            for j in range(0, cascade_dur, 5):
+                if cascade_t + j < n:
+                    spikes[cascade_t + j] = min(1.0, 0.3 + 0.02 * j)
+        else:
+            idx = np.random.choice(range(100, n-100), size=n//200, replace=False)
+            for i in idx:
+                dur = np.random.randint(6, 60)
+                spikes[i:min(i+dur, n)] = np.random.uniform(0.1, 0.3)
 
         util = np.clip(base + spikes, 0.2, 1.0)
         idle = self.c.num_gpus * self.c.gpu_idle_watts / 1e6

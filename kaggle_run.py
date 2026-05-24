@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore")
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
+MODEL_TYPE = "dlinear"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4
@@ -20,6 +21,7 @@ PATIENCE = 0
 LR = 1e-4
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
+DIR_W = 0.3
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 
@@ -51,6 +53,7 @@ import torch
 from src.config import Config
 from src.data.generator import generate_dataset
 from src.data.features import FeatureStore
+from src.models.dlinear import DLinear
 from src.models.transformer import ColossusTransformer
 from src.engine.trainer import Trainer
 
@@ -60,6 +63,8 @@ print(f"Device: {device} | GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_
 # ─── Config ────────────────────────────────────────────────────────
 cfg = Config()
 cfg.sim.num_days = DAYS
+cfg.sim.pattern_spikes = True
+cfg.model.model_type = MODEL_TYPE
 cfg.model.d_model = D_MODEL
 cfg.model.n_layers = N_LAYERS
 cfg.model.n_heads = N_HEADS
@@ -72,6 +77,7 @@ cfg.train.epochs = EPOCHS
 cfg.train.patience = PATIENCE
 cfg.train.lr = LR
 cfg.train.weight_decay = WEIGHT_DECAY
+cfg.train.dir_w = DIR_W
 
 # ─── Data (skip if already saved) ──────────────────────────────────
 if not os.path.exists(f"{DATA_DIR}/X.npy"):
@@ -109,7 +115,12 @@ if ckpts:
 # ─── Model ─────────────────────────────────────────────────────────
 print("\n[2/3] Building model...")
 split = int(0.8 * len(X))
-model = ColossusTransformer(cfg.model)
+if cfg.model.model_type == "dlinear":
+    model = DLinear(cfg.model)
+    print(f"  Model: DLinear ({sum(p.numel() for p in model.parameters()):,} params)")
+else:
+    model = ColossusTransformer(cfg.model)
+    print(f"  Model: Transformer ({sum(p.numel() for p in model.parameters()):,} params)")
 trainer = Trainer(model, cfg)
 
 if resume_ep > 0:

@@ -8,6 +8,7 @@ import numpy as np, time
 from pathlib import Path
 from src.config import Config
 from src.models.transformer import ColossusTransformer
+from src.models.dlinear import DLinear
 from src.models.losses import SpikeLoss
 
 
@@ -22,11 +23,12 @@ class Trainer:
             self.is_parallel = True
         self.cfg = cfg
         self.loss_fn = SpikeLoss(cfg.train.under_w, cfg.train.over_w,
-                                  cfg.train.spike_std, cfg.train.cls_w)
+                                  cfg.train.spike_std, cfg.train.cls_w,
+                                  cfg.train.dir_w)
         self.opt = torch.optim.AdamW(model.parameters(), lr=cfg.train.lr,
                                       weight_decay=cfg.train.weight_decay, betas=(0.9,0.98))
         self.step = 0
-        self.hist = {"tl":[],"vl":[],"vm":[],"vs":[]}
+        self.hist = {"tl":[],"vl":[],"vm":[],"vs":[],"vd":[]}
 
     def _lr(self, cur, total):
         c = self.cfg.train
@@ -36,7 +38,7 @@ class Trainer:
 
     def _epoch(self, dl, train, total=0):
         self.model.train() if train else self.model.eval()
-        s = {k:0. for k in ["pl","sl","loss","mae","da","sa"]}; n=0
+        s = {k:0. for k in ["pl","sl","dl","loss","mae","da","sa"]}; n=0
         ctx = torch.enable_grad() if train else torch.no_grad()
         with ctx:
             for x,yp,ys in dl:
@@ -70,7 +72,7 @@ class Trainer:
 
         start_ep = resume_from + 1
         if resume_from > 0:
-            self.hist = {"tl":[],"vl":[],"vm":[],"vs":[]}
+            self.hist = {"tl":[],"vl":[],"vm":[],"vs":[],"vd":[]}
             print(f"\n  Resuming from epoch {start_ep}...")
 
         print(f"\n  Device: {self.dev} | Train: {len(tds):,} | Val: {len(vds):,}")
@@ -86,11 +88,13 @@ class Trainer:
             self.hist["vl"].append(vm["loss"])
             self.hist["vm"].append(vm["mae"])
             self.hist["vs"].append(vm["sa"])
+            self.hist["vd"].append(vm["da"])
 
             if ep%5==0 or ep==1:
                 print(f"  Ep {ep:3d}/{tc.epochs} | TL:{tm['loss']:.4f} VL:{vm['loss']:.4f} "
                       f"| MAE:{vm['mae']:.2f}MW SigAcc:{vm['sa']:.3f} "
-                      f"DirAcc:{vm['da']:.3f} LR:{self.opt.param_groups[0]['lr']:.2e} {dt:.1f}s")
+                      f"DirAcc:{vm['da']:.3f} DirLoss:{vm['dl']:.4f} "
+                      f"LR:{self.opt.param_groups[0]['lr']:.2e} {dt:.1f}s")
 
             sd = self.model_raw.state_dict() if self.is_parallel else self.model.state_dict()
             if vm["loss"]<best:

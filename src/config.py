@@ -31,38 +31,40 @@ class GridConfig:
 
 @dataclass
 class ModelConfig:
+    model_type: str = "dlinear"
     num_features: int = 30
-    lookback: int = 120
-    horizon: int = 120
+    lookback: int = 60
+    horizon: int = 60
     patch_size: int = 10
-    d_model: int = 256
-    n_heads: int = 8
-    n_layers: int = 6
-    d_ff: int = 1024
-    dropout: float = 0.1
+    d_model: int = 128
+    n_heads: int = 4
+    n_layers: int = 3
+    d_ff: int = 512
+    dropout: float = 0.35
     n_classes: int = 3
     use_freq: bool = True
 
 
 @dataclass
 class TrainConfig:
-    batch_size: int = 32
+    batch_size: int = 128
     lr: float = 1e-4
-    weight_decay: float = 1e-5
-    epochs: int = 50
+    weight_decay: float = 3e-4
+    epochs: int = 80
     warmup: int = 500
-    patience: int = 10
+    patience: int = 0
     grad_clip: float = 1.0
     under_w: float = 5.0
     over_w: float = 1.0
     spike_std: float = 1.5
     cls_w: float = 0.5
+    dir_w: float = 0.3
 
 
 @dataclass
 class SignalConfig:
-    critical_mw: float = 55.0
-    warning_mw: float = 45.0
+    critical_mw: float = 85.0
+    warning_mw: float = 70.0
 
 
 @dataclass
@@ -71,6 +73,7 @@ class SimConfig:
     interval_sec: int = 5
     solar_cap_mw: float = 500.0
     noise: float = 0.05
+    pattern_spikes: bool = True
 
 
 @dataclass

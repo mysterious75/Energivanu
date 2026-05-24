@@ -66,13 +66,55 @@ MISTAKE 9: LEARNED POSITIONAL ENCODING
   Lesson: Sinusoidal PE (sin/cos) handles any sequence length
   Fix: Added PositionalEncoding class with fixed sin/cos frequencies
 
+MISTAKE 10: LOWERING THRESHOLDS WITHOUT CHECKING DATA DISTRIBUTION
+  What: Changed signal thresholds from 85/70 to 55/45 MW
+  Why: Wanted more realistic critical event distribution
+  Result: SigAcc collapsed from 90.9% to 68.3% (May 24 run)
+  Detail: New thresholds (55/45) sit within average data range → borderline
+          samples dominate → classifier confused → random guessing
+  Lesson: Signal thresholds MUST match actual power distribution.
+          Plot power histogram first, set thresholds at 90th/95th percentile.
+          Don't lower thresholds artificially to "create" events.
+  Fix: Keep thresholds at 85/70 OR increase data variance so natural peaks
+       cross lower thresholds naturally.
+
+MISTAKE 11: SMOOTH DATA STILL OVERFITS DESPITE REGULARIZATION
+  What: dropout=0.35, wd=3e-4, batch=128 — still overfitting by ep10
+  Why: Believed smooth data + regularization = no overfit
+  Result: Val loss increased while train loss dropped (May 24 run)
+          MAE 6.94 MW but still far from 3 MW target
+  Evidence: Ep5 VL=117.03 → Ep10 VL=124.34 (⬆6%)
+            Ep5 TL=125.17 → Ep10 TL=111.29 (⬇11%)
+  Lesson: Smooth sinusoidal data is MEMORIZED, not LEARNED.
+          Model fits training sine waves by rote → zero generalization.
+          Data needs STRUCTURED COMPLEXITY (pattern-based events,
+          realistic variance, scheduled spikes) not uniform smoothness.
+  Fix: Add pattern-based event generator (not random, not smooth).
+       Or: replace Transformer with simpler model (DLinear ~10K params).
+
+MISTAKE 12: COMPOSITE LOSS MASKING SIGNAL DEGRADATION
+  What: SpikeLoss combines power MSE + signal CE into one total loss
+  Why: Single loss number easier to monitor
+  Result: MAE improved (8.87→6.94) while SigAcc dropped (71.3%→68.3%)
+          Val loss increase was attributed to power head, not signal head
+  Detail: Signal accuracy PEAKED at epoch 1 and never recovered.
+          Classifier actively degraded as training progressed.
+  Lesson: Always log power_loss and signal_loss SEPARATELY.
+          A single "loss" metric hides conflicting trends.
+          When signal weight (cls_w=0.5) is small, power dominates.
+  Fix: Split loss logging: track power_mae, sig_acc, dir_acc separately.
+       Increase cls_w if signal matters.
+
 KEY PRINCIPLES LEARNED:
-  1. Synthetic data must be REGULAR (patterns) or model fails
-  2. Batch size 32-64 optimal, 256+ hurts generalization
-  3. DataParallel only helps if batch/GPU ≥ 64
-  4. Early stopping hides trends — run full epochs + manual inspect
-  5. Always save history to disk (JSON), not just in memory
-  6. Kaggle and Colab have different APIs for Drive auth
-  7. Clean up /kaggle/working/ before each fresh run
-  8. torch.nn.functional.elu(), not torch.elu()
-  9. Sinusoidal PE > learned PE for time series
+   1. Synthetic data must be REGULAR (patterns) or model fails
+   2. Batch size 32-64 optimal, 256+ hurts generalization
+   3. DataParallel only helps if batch/GPU ≥ 64
+   4. Early stopping hides trends — run full epochs + manual inspect
+   5. Always save history to disk (JSON), not just in memory
+   6. Kaggle and Colab have different APIs for Drive auth
+   7. Clean up /kaggle/working/ before each fresh run
+   8. torch.nn.functional.elu(), not torch.elu()
+   9. Sinusoidal PE > learned PE for time series
+  10. Signal thresholds must match data distribution (90th/95th %ile)
+  11. Smooth data = memorization, not learning. Need structured complexity.
+  12. Composite loss hides conflicting trends. Always split power/signal logs.

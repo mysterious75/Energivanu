@@ -58,7 +58,7 @@ class TrainConfig:
     over_w: float = 1.0
     spike_std: float = 1.5
     cls_w: float = 0.5
-    dir_w: float = 0.3
+    dir_w: float = 10.0
 
 
 @dataclass

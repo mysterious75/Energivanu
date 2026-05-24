@@ -21,7 +21,7 @@ PATIENCE = 0
 LR = 1e-4
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
-DIR_W = 0.3
+DIR_W = 10.0
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 

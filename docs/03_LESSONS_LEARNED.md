@@ -92,6 +92,52 @@ MISTAKE 11: SMOOTH DATA STILL OVERFITS DESPITE REGULARIZATION
   Fix: Add pattern-based event generator (not random, not smooth).
        Or: replace Transformer with simpler model (DLinear ~10K params).
 
+MISTAKE 13: RESTORING THRESHOLDS WITHOUT VERIFYING DATA CAPABILITY
+  What: Restored signal thresholds to 85/70 MW from 55/45
+  Why: Wanted 90%+ SigAcc like Experiment 1
+  Result: CRITICAL count = 0 (May 24 run, generation output confirmed)
+  Detail: Max GPU power = 100K GPUs × (700W - 75W)/1e6 + 75W*100K/1e6
+          = 62.5 MW + 7.5 MW = 70 MW MAX (with clipping at util=1.0)
+          Threshold 85 MW is PHYSICALLY IMPOSSIBLE in current generator
+  Lesson: After changing thresholds, ALWAYS check the data distribution.
+          Run generator → plot power histogram → verify thresholds are
+          within achievable range. Don't assume thresholds "worked before"
+          without checking current data range.
+  Fix: Increase ClusterConfig.num_gpus to 140K so max power = 98 MW.
+       Add assertion in FeatureStore: check max value vs thresholds.
+
+MISTAKE 14: DIRECTION LOSS ON 5-SECOND DIFFERENCES
+  What: Used sign() then cosine_similarity on consecutive 5-second diffs
+  Why: Wanted model to learn up/down direction of power changes
+  Result: DirAcc stuck at 50% across all approaches
+  Detail:
+    - sign() → zero gradient (loss stayed at 1.0)
+    - cosine_similarity → tiny diff values (~0.01-0.05 MW) numerically
+      unstable; gradient overwhelmed by power loss (100x larger)
+    - Power time series at 5-second level is mostly random walk noise
+  Lesson: 5-second directional changes are essentially random in smooth
+           power data. Direction loss must operate on MINUTE-level
+           windows (stride=12 = 1 minute) to capture meaningful trends.
+           MSE on differences works better than cosine_similarity for
+           this use case because it provides stronger gradients.
+  Fix: Use stride=12 (1-minute windows) and F.mse_loss(pd, td) instead
+       of cosine_similarity on 5-second diffs.
+
+MISTAKE 15: SigAcc 99% IS DECEPTIVE WITH ZERO CRITICAL EVENTS
+  What: Celebrated SigAcc 98.9% without checking class distribution
+  Why: Thought 99% accuracy means model is perfect
+  Result: CRITICAL events = 0, only SAFE + PREPARE exist
+          → Model is doing binary classification (SAFE vs PREPARE)
+          → 98% SAFE, 2% PREPARE → SigAcc inflated by class imbalance
+          → Model useless in production where CRITICAL spikes matter
+  Lesson: Always check the distribution of signal classes (SAFE/PREPARE/
+          CRITICAL) in the generated data. High accuracy with missing
+          classes means the model learned NOTHING about crisis events.
+          Accuracy on imbalanced data is misleading.
+  Fix: Ensure ALL 3 classes exist in training data. Verify with
+       "(S==0).sum() (S==1).sum() (S==2).sum()" before training.
+       If CRITICAL=0, increase GPU count or data variance.
+
 MISTAKE 12: COMPOSITE LOSS MASKING SIGNAL DEGRADATION
   What: SpikeLoss combines power MSE + signal CE into one total loss
   Why: Single loss number easier to monitor

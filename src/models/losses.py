@@ -19,10 +19,10 @@ class SpikeLoss(nn.Module):
         w = torch.where(err>0, self.uw+self.uw*sp, torch.tensor(self.ow,device=err.device))
         pl = (w*err.pow(2)).mean()
 
-        pd = pp[:,1:]-pp[:,:-1]
-        td = tp[:,1:]-tp[:,:-1]
-        cos = F.cosine_similarity(pd, td, dim=-1)
-        dl = (1 - cos).mean()
+        stride = 12
+        pd = pp[:, stride-1::stride] - pp[:, :-stride+1:stride]
+        td = tp[:, stride-1::stride] - tp[:, :-stride+1:stride]
+        dl = F.mse_loss(pd, td)
 
         cw = torch.tensor([1.,2.,5.], device=ps.device)
         sl = F.cross_entropy(ps, ts, weight=cw)

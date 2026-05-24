@@ -78,6 +78,7 @@ cfg.train.patience = PATIENCE
 cfg.train.lr = LR
 cfg.train.weight_decay = WEIGHT_DECAY
 cfg.train.dir_w = DIR_W
+cfg.cluster.num_gpus = 140_000
 
 # ─── Data (skip if already saved) ──────────────────────────────────
 if not os.path.exists(f"{DATA_DIR}/X.npy"):

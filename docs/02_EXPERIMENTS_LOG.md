@@ -85,11 +85,28 @@ EXPERIMENT 7 — PATTERN SPIKES + THRESHOLDS 85/70 [COMPLETED]
            Direction loss was NOT backpropagating.
   Fix: Replace sign() with cosine_similarity for differentiable DirLoss
 
-EXPERIMENT 7b — DIFFERENTIABLE DIRECTION LOSS [CURRENT]
-  Config: Same as Exp7
-  Loss: SpikeLoss + DirectionLoss (cosine_similarity)
+EXPERIMENT 7b — DIFFERENTIABLE DIRECTION LOSS [COMPLETED]
+  Config: Same as Exp7 + dir_w=10
+  Loss: SpikeLoss + DirectionLoss (cosine_similarity, stride=1)
+  Result: MAE=2.57@ep25, SigAcc=98.9%, DirAcc=50.1%
+  Problem:
+    - DirAcc still 50% (cosine_similarity gradient too small)
+    - CRITICAL count = 0 (thresholds 85/70 impossible with 100K GPUs)
+    - SigAcc 98.9% is fake (no CRITICAL class, binary problem)
+  Verdict: ⚠️ Three separate bugs found: DirLoss wrong, GPUs too few,
+           threshold mismatch. All fixed in Exp7c.
+
+EXPERIMENT 7c — ALL FIXES: 140K GPUs + MSE DIRLOSS + DIR_W=30 [CURRENT]
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=128, epochs=80
+    lr=1e-4, wd=3e-4, dropout=0.35, dir_w=30, stride=12
+    DataParallel ON (2x T4), patience=0, thresholds=85/70
+    num_gpus=140,000 (max power 98 MW → CRITICAL events possible)
+  Data: Pattern-based spikes + 140K GPUs
+  Loss: SpikeLoss + DirectionLoss (MSE on 1-min differences, stride=12)
   Status: READY TO RUN
-  Expected: DirAcc > 55%, rest same as Exp7
+  Expected: MAE ~3-4 MW, SigAcc ~90-95% (all 3 classes), DirAcc >55%
   Verdict: 🏁 CURRENT BEST APPROACH
 
 GPU UTILIZATION EXPERIMENTS:

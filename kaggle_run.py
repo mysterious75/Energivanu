@@ -21,7 +21,7 @@ PATIENCE = 0
 LR = 1e-4
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
-DIR_W = 3.0
+DIR_W = 100.0
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 
@@ -85,7 +85,7 @@ cfg.train.patience = PATIENCE
 cfg.train.lr = LR
 cfg.train.weight_decay = WEIGHT_DECAY
 cfg.train.dir_w = DIR_W
-cfg.cluster.num_gpus = 140_000
+cfg.cluster.num_gpus = 150_000
 
 # ─── Data (skip if already saved) ──────────────────────────────────
 if not os.path.exists(f"{DATA_DIR}/X.npy"):
@@ -93,20 +93,22 @@ if not os.path.exists(f"{DATA_DIR}/X.npy"):
     df = generate_dataset(cfg)
     df.to_parquet(f"{DATA_DIR}/colossus_{DAYS}d.parquet", index=False)
     fs = FeatureStore(cfg)
-    X, Y, S = fs.prepare(df, fit=True)
+    X, Y, S, D = fs.prepare(df, fit=True)
     cfg.model.num_features = X.shape[2]
     np.save(f"{DATA_DIR}/X.npy", X)
     np.save(f"{DATA_DIR}/Y.npy", Y)
     np.save(f"{DATA_DIR}/S.npy", S)
+    np.save(f"{DATA_DIR}/D.npy", D)
     pickle.dump(cfg, open(f"{DATA_DIR}/cfg.pkl", "wb"))
-    print(f"  Features: {cfg.model.num_features} | X:{X.shape} Y:{Y.shape} S:{S.shape}")
+    print(f"  Features: {cfg.model.num_features} | X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
 else:
     print("\n[1/3] Loading saved data...")
     cfg = pickle.load(open(f"{DATA_DIR}/cfg.pkl", "rb"))
     X = np.load(f"{DATA_DIR}/X.npy")
     Y = np.load(f"{DATA_DIR}/Y.npy")
     S = np.load(f"{DATA_DIR}/S.npy")
-    print(f"  Loaded: X:{X.shape} Y:{Y.shape} S:{S.shape}")
+    D = np.load(f"{DATA_DIR}/D.npy")
+    print(f"  Loaded: X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
 
 # ─── Resume check ──────────────────────────────────────────────────
 resume_ep = 0
@@ -141,8 +143,8 @@ if resume_ep > 0:
 print("\n[3/3] Training...")
 t_start = time.time()
 history = trainer.fit(
-    X[:split], Y[:split], S[:split],
-    X[split:], Y[split:], S[split:],
+    X[:split], Y[:split], S[:split], D[:split],
+    X[split:], Y[split:], S[split:], D[split:],
     drive_dir=CKPT_DIR, save_every=1, resume_from=resume_ep
 )
 t_total = time.time() - t_start

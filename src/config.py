@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class ClusterConfig:
-    num_gpus: int = 135_000
+    num_gpus: int = 150_000
     gpu_tdp_watts: float = 700.0
     gpu_idle_watts: float = 75.0
     location: str = "Memphis, TN"
@@ -58,7 +58,7 @@ class TrainConfig:
     over_w: float = 1.0
     spike_std: float = 1.5
     cls_w: float = 0.5
-    dir_w: float = 30.0
+    dir_w: float = 100.0
 
 
 @dataclass

@@ -87,6 +87,7 @@ class ColossusTransformer(nn.Module):
         self.shead = nn.Sequential(
             nn.Linear(cfg.d_model,cfg.d_ff//2), nn.GELU(), nn.Dropout(cfg.dropout),
             nn.Linear(cfg.d_ff//2, cfg.n_classes))
+        self.dir_head = nn.Linear(cfg.d_model, 2)
 
         self._init()
         print(f"  Params: {sum(p.numel() for p in self.parameters()):,}")
@@ -97,7 +98,7 @@ class ColossusTransformer(nn.Module):
                 nn.init.xavier_uniform_(m.weight)
                 if m.bias is not None: nn.init.zeros_(m.bias)
 
-    def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         h = self.patch(x)
         h = self.pos_enc(h)
         h = self.enc(h).mean(1)
@@ -106,4 +107,4 @@ class ColossusTransformer(nn.Module):
             g = torch.sigmoid(self.fgate(torch.cat([h,hf],-1)))
             h = g*h + (1-g)*hf
         h = self.grn(h)
-        return self.phead(h), self.shead(h)
+        return self.phead(h), self.shead(h), self.dir_head(h)

@@ -18,6 +18,7 @@ class DLinear(nn.Module):
         self.trend = nn.Linear(inp, hz)
         self.seasonal = nn.Linear(inp, hz)
         self.shead = nn.Linear(inp, cfg.n_classes)
+        self.dir_head = nn.Linear(inp, 2)
 
         self._init()
         print(f"  DLinear Params: {sum(p.numel() for p in self.parameters()):,}")
@@ -29,7 +30,7 @@ class DLinear(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
-    def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         B, T, F = x.shape
         x_flat = x.reshape(B, T * F)
 
@@ -39,4 +40,4 @@ class DLinear(nn.Module):
 
         power = self.trend(trend_part) + self.seasonal(seasonal_part)
         signal = self.shead(x_flat)
-        return power, signal
+        return power, signal, self.dir_head(x_flat)

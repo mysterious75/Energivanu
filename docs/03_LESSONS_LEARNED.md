@@ -174,6 +174,32 @@ MISTAKE 17: NOT HANDLING KAGGLE INACTIVITY TIMEOUT
   Fix: Add daemon thread printing "[heartbeat] HH:MM:SS" every 5 min.
        This keeps session alive without manual interaction.
 
+MISTAKE 18: DIRECTION AS REGRESSION ON NOISY DIFFS
+  What: Used MSE on stride=12 (1-minute) power differences to learn direction
+  Why: Thought minimizing Δerror would teach model up/down sign
+  Result: DirAcc stuck at 50.8-51.0% across 65 epochs, plateaued at ep20
+  Evidence:
+    - Ep20 DirAcc=0.507, Ep65 DirAcc=0.510 (no improvement in 45 epochs)
+    - DirLoss converged to ~23.8 (avg 1-min Δpower ≈ 0.1-0.2 MW noise)
+    - Val MAE stuck at 3.42 MW (data noise floor ~3.5 MW)
+  Detail:
+    - MSE on small diffs learns MAGNITUDE of average change, not direction
+    - At steady state, Δpower ≈ noise → model predicts zero → 50% by chance
+    - Sigmoid of differences doesn't help either (gradient ≈ 0 when |Δ|→0)
+    - Three approaches all failed: sign()→zero_grad, cosine_similarity→weak,
+      MSE→converged to noise mean
+  Lesson: Direction is a CLASSIFICATION problem, not regression.
+          "Is power going up or down?" is a binary question → use BCE.
+          Regression on noisy differences can't teach sign because the
+          magnitude of change is uncorrelated with its direction.
+          Separate concerns: power head for regression, direction head for
+          binary classification. Each loss targets a different capability.
+  Fix: Replace stride-based MSE with Direction Classification Head:
+       - Add nn.Linear(d_model, 2) to model → outputs up/down logits
+       - Target: compare Y[end] vs Y[start] of 5-min horizon
+       - Use F.cross_entropy(dir_logits, dir_labels) instead of MSE
+       - dir_w=100 for balanced gradient (BCE range 0.2-0.7 at convergence)
+
 KEY PRINCIPLES LEARNED:
    1. Synthetic data must be REGULAR (patterns) or model fails
    2. Batch size 32-64 optimal, 256+ hurts generalization
@@ -187,3 +213,4 @@ KEY PRINCIPLES LEARNED:
   10. Signal thresholds must match data distribution (90th/95th %ile)
   11. Smooth data = memorization, not learning. Need structured complexity.
   12. Composite loss hides conflicting trends. Always split power/signal logs.
+  13. Direction is classification, not regression. BCE > MSE for sign learning.

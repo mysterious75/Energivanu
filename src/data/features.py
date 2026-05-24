@@ -55,7 +55,7 @@ class FeatureStore:
 
         lb = self.cfg.model.lookback
         hz = self.cfg.model.horizon
-        X, Y, S = [], [], []
+        X, Y, S, D = [], [], [], []
         for i in range(lb, len(F)-hz):
             X.append(F[i-lb:i])
             future = T[i:i+hz]
@@ -63,10 +63,13 @@ class FeatureStore:
             mx = np.max(future)
             S.append(2 if mx >= self.cfg.signal.critical_mw
                      else 1 if mx >= self.cfg.signal.warning_mw else 0)
+            D.append(1 if future[-1] > future[0] else 0)
 
         X = np.array(X, dtype=np.float32)
         Y = np.array(Y, dtype=np.float32)
         S = np.array(S, dtype=np.int64)
+        D = np.array(D, dtype=np.int64)
         print(f"  Features: {len(self.cols)} | X: {X.shape} | Y: {Y.shape}")
         print(f"  SAFE:{(S==0).sum()} PREPARE:{(S==1).sum()} CRITICAL:{(S==2).sum()}")
-        return X, Y, S
+        print(f"  Direction: UP:{(D==1).sum()} DOWN:{(D==0).sum()}")
+        return X, Y, S, D

@@ -41,15 +41,15 @@ class Trainer:
         s = {k:0. for k in ["pl","sl","dl","loss","mae","da","sa"]}; n=0
         ctx = torch.enable_grad() if train else torch.no_grad()
         with ctx:
-            for x,yp,ys in dl:
-                x,yp,ys = x.to(self.dev),yp.to(self.dev),ys.to(self.dev)
+            for x,yp,ys,yd in dl:
+                x,yp,ys,yd = x.to(self.dev),yp.to(self.dev),ys.to(self.dev),yd.to(self.dev)
                 if train:
                     self.step+=1
                     for g in self.opt.param_groups:
                         g["lr"]=self._lr(self.step,total)
                     self.opt.zero_grad()
-                pp,ps = self.model(x)
-                l,m = self.loss_fn(pp,yp,ps,ys)
+                pp,ps,pd = self.model(x)
+                l,m = self.loss_fn(pp,yp,ps,ys,pd,yd)
                 if train:
                     l.backward()
                     nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.train.grad_clip)
@@ -58,10 +58,12 @@ class Trainer:
                 n+=1
         return {k:v/max(n,1) for k,v in s.items()}
 
-    def fit(self, Xtr,Ytr,Str,Xvl,Yvl,Svl, drive_dir=None, save_every=5, resume_from=0):
+    def fit(self, Xtr, Ytr, Str, Dtr, Xvl, Yvl, Svl, Dvl, drive_dir=None, save_every=5, resume_from=0):
         tc = self.cfg.train
-        tds = TensorDataset(torch.FloatTensor(Xtr),torch.FloatTensor(Ytr),torch.LongTensor(Str))
-        vds = TensorDataset(torch.FloatTensor(Xvl),torch.FloatTensor(Yvl),torch.LongTensor(Svl))
+        tds = TensorDataset(torch.FloatTensor(Xtr), torch.FloatTensor(Ytr),
+                            torch.LongTensor(Str), torch.LongTensor(Dtr))
+        vds = TensorDataset(torch.FloatTensor(Xvl), torch.FloatTensor(Yvl),
+                            torch.LongTensor(Svl), torch.LongTensor(Dvl))
         tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=4, pin_memory=True)
         vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=4, pin_memory=True)
 

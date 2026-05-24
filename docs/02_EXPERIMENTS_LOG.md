@@ -60,16 +60,30 @@ EXPERIMENT 5 — SMALL BATCH (64) + ANTIOVERFIT + SYNC SPIKES
   Problem: Val loss still increasing from epoch 1
   Verdict: ❌ Model still can't learn random sync spikes
 
-EXPERIMENT 6 — BACK TO SMOOTH DATA + LOWER THRESHOLDS [CURRENT]
+EXPERIMENT 6 — SMOOTH DATA + LOWER THRESHOLDS
   Config:
     days=30, d_model=128, layers=3, heads=4, d_ff=512
     lookback=60, horizon=60, batch=128, epochs=80
     lr=1e-4, wd=3e-4, dropout=0.35
-    DataParallel ON (2x T4), patience=0 (no early stop)
-  Data: Original smooth generator (sync spikes REMOVED)
-  Thresholds: critical=55, warning=45 (LOWERED for realistic events)
-  Status: RUNNING NOW (Kaggle)
-  Expected: MAE ~5-6 MW with ~30-40% critical events
+    DataParallel ON (2x T4), patience=0, thresholds=55/45
+  Data: Original smooth generator
+  Result: MAE=6.94@ep10, SigAcc=68.7%, DirAcc=50.2%
+  Problem: Overfitting from ep10, SigAcc worse than ep1 (71.3%)
+  Verdict: ❌ Smooth data memorized, low thresholds confused classifier
+
+EXPERIMENT 7 — TRANSFORMER + DIRECTION LOSS + PATTERN SPIKES [CURRENT]
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=128, epochs=80
+    lr=1e-4, wd=3e-4, dropout=0.35, dir_w=0.3
+    DataParallel ON (2x T4), patience=0
+    thresholds=85/70 (restored)
+  Data: Pattern-based spikes (every 4hr + cascading failures)
+  Loss: SpikeLoss + DirectionLoss (sign MSE)
+  Status: WAITING TO RUN (Kaggle)
+  Expected: MAE ~5-6 MW, SigAcc ~85-90%, DirAcc > 55%
+  GPU util: ~50-60% per GPU (batch=128, DP, 2x T4)
+  Epoch time: ~45s | Total: ~1 hour for 80 epochs
   Verdict: 🏁 CURRENT BEST APPROACH
 
 GPU UTILIZATION EXPERIMENTS:

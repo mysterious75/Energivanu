@@ -21,7 +21,7 @@ PATIENCE = 0
 LR = 1e-4
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
-DIR_W = 10.0
+DIR_W = 3.0
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 
@@ -59,6 +59,13 @@ from src.engine.trainer import Trainer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device} | GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'}")
+
+import threading as _th
+def _heartbeat():
+    while True:
+        time.sleep(300)
+        print(f"  [heartbeat] {time.strftime('%H:%M:%S')} — training running", flush=True)
+_th.Thread(target=_heartbeat, daemon=True).start()
 
 # ─── Config ────────────────────────────────────────────────────────
 cfg = Config()

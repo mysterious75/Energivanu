@@ -151,6 +151,29 @@ MISTAKE 12: COMPOSITE LOSS MASKING SIGNAL DEGRADATION
   Fix: Split loss logging: track power_mae, sig_acc, dir_acc separately.
        Increase cls_w if signal matters.
 
+MISTAKE 16: LOSS IMBALANCE BETWEEN POWER AND DIRECTION
+  What: Used dir_w=10 with DirLoss ≈ 24 → 240 gradient vs pl ≈ 50
+  Why: Thought larger weight = faster direction learning
+  Result: Direction gradient 5x power gradient → model optimized sign
+          at cost of absolute power → val loss increased after Ep20
+  Evidence: Ep20 was best (MAE=3.71), then degraded to Ep40 (MAE=3.78)
+  Lesson: Direction loss weight must match power loss scale.
+          Measure both losses → set weights so contributions are equal.
+          Formula: dir_w ≈ pl_avg / dl_avg = 50/24 ≈ 2
+  Fix: dir_w=3 gives 72 contribution vs 50 power → 59/41 split
+
+MISTAKE 17: NOT HANDLING KAGGLE INACTIVITY TIMEOUT
+  What: Long training runs without user interaction
+  Why: Focused only on model code, not environment quirks
+  Result: Kaggle auto-disconnects after 10-15 min of no interaction
+          → training killed mid-way despite 9-hour session limit
+  Detail: Kaggle browser detects inactivity (no clicks/scrolls/keystrokes)
+          → shows "Reconnect" prompt → if unanswered, kernel dies
+  Lesson: Training scripts need a heartbeat mechanism that prints
+          to console periodically. stdout activity counts as engagement.
+  Fix: Add daemon thread printing "[heartbeat] HH:MM:SS" every 5 min.
+       This keeps session alive without manual interaction.
+
 KEY PRINCIPLES LEARNED:
    1. Synthetic data must be REGULAR (patterns) or model fails
    2. Batch size 32-64 optimal, 256+ hurts generalization

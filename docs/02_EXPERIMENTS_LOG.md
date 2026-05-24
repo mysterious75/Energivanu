@@ -96,7 +96,22 @@ EXPERIMENT 7b — DIFFERENTIABLE DIRECTION LOSS [COMPLETED]
   Verdict: ⚠️ Three separate bugs found: DirLoss wrong, GPUs too few,
            threshold mismatch. All fixed in Exp7c.
 
-EXPERIMENT 7c — ALL FIXES: 140K GPUs + MSE DIRLOSS + DIR_W=30 [CURRENT]
+EXPERIMENT 7c — ALL FIXES: 140K GPUs + MSE DIRLOSS [COMPLETED]
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=128, epochs=80
+    lr=1e-4, wd=3e-4, dropout=0.35, dir_w=10, stride=12
+    DataParallel ON, patience=0, thresholds=85/70
+    num_gpus=140,000
+  Data: Pattern-based spikes + 140K GPUs (CRITICAL events: 36,254)
+  Loss: SpikeLoss + DirLoss (MSE stride=12)
+  Result: MAE=3.71@ep20 (BEST), then overfit Ep25-40
+  Problem: dir_w=10 → DirLoss(24)×10=240 vs pl(50) → 5x dominant
+           Model optimized direction at cost of power → val loss up
+  Verdict: ⚠️ dir_w too high. Overfitting returned due to loss imbalance.
+  Fix: dir_w=3 for equal power/direction gradient ratio.
+
+EXPERIMENT 7d — DIR_W=3 + KAGGLE KEEPALIVE [CURRENT]
   Config:
     days=30, d_model=128, layers=3, heads=4, d_ff=512
     lookback=60, horizon=60, batch=128, epochs=80
@@ -107,6 +122,18 @@ EXPERIMENT 7c — ALL FIXES: 140K GPUs + MSE DIRLOSS + DIR_W=30 [CURRENT]
   Loss: SpikeLoss + DirectionLoss (MSE on 1-min differences, stride=12)
   Status: READY TO RUN
   Expected: MAE ~3-4 MW, SigAcc ~90-95% (all 3 classes), DirAcc >55%
+  Config:
+    days=30, d_model=128, layers=3, heads=4, d_ff=512
+    lookback=60, horizon=60, batch=128, epochs=80
+    lr=1e-4, wd=3e-4, dropout=0.35, dir_w=3, stride=12
+    DataParallel ON, patience=0, thresholds=85/70
+    num_gpus=140,000
+  Data: Pattern-based spikes + 140K GPUs
+  Loss: SpikeLoss + DirLoss (MSE stride=12, dir_w=3)
+  Keepalive: Heartbeat prints every 5 min to prevent Kaggle timeout
+  Status: READY TO RUN
+  Expected: Dir_loss(24)×3=72 vs pl(~50) → ~59/41 split → balanced
+            MAE <3.5 MW, SigAcc ~92%, DirAcc slowly improving
   Verdict: 🏁 CURRENT BEST APPROACH
 
 GPU UTILIZATION EXPERIMENTS:

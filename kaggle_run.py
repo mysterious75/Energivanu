@@ -19,7 +19,7 @@ D_FF = 512
 LOOKBACK = 60
 HORIZON = 60
 BATCH_SIZE = 256
-EPOCHS = 100
+EPOCHS = 120
 PATIENCE = 0
 LR = 5e-6
 WARMUP = 500
@@ -124,6 +124,14 @@ else:
     else:
         print("\n[1/3] Loading saved data...")
         cfg = pickle.load(open(f"{DATA_DIR}/cfg.pkl", "rb"))
+        cfg.train.epochs = EPOCHS
+        cfg.train.lr = LR
+        cfg.train.patience = PATIENCE
+        cfg.train.batch_size = BATCH_SIZE
+        cfg.train.warmup = WARMUP
+        cfg.train.weight_decay = WEIGHT_DECAY
+        cfg.train.dir_w = DIR_W
+        cfg.model.dropout = DROPOUT
         X = np.load(f"{DATA_DIR}/X.npy")
         Y = np.load(f"{DATA_DIR}/Y.npy")
         S = np.load(f"{DATA_DIR}/S.npy")

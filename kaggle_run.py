@@ -7,7 +7,10 @@ import os, sys, pickle, numpy as np, glob, re, time, shutil, json, warnings
 warnings.filterwarnings("ignore")
 
 # ─── Config ────────────────────────────────────────────────────────
+DATA_SOURCE = "synthetic"        # "synthetic" | "real" (MIT Supercloud)
 DAYS = 30
+MAX_JOBS = 50                    # job files to download when DATA_SOURCE=real
+REAL_STRIDE = 50                 # 50×100ms = 5s per step (match synthetic)
 MODEL_TYPE = "transformer"
 D_MODEL = 128
 N_LAYERS = 3
@@ -60,6 +63,9 @@ from src.models.dlinear import DLinear
 from src.models.transformer import ColossusTransformer
 from src.engine.trainer import Trainer
 
+if DATA_SOURCE == "real":
+    from src.data.real_data import prepare as prepare_real_data
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device} | GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A'}")
 
@@ -91,28 +97,38 @@ cfg.train.weight_decay = WEIGHT_DECAY
 cfg.train.dir_w = DIR_W
 cfg.cluster.num_gpus = 150_000
 
-# ─── Data (skip if already saved) ──────────────────────────────────
-if not os.path.exists(f"{DATA_DIR}/X.npy"):
-    print("\n[1/3] Generating data...")
-    df = generate_dataset(cfg)
-    df.to_parquet(f"{DATA_DIR}/colossus_{DAYS}d.parquet", index=False)
-    fs = FeatureStore(cfg)
-    X, Y, S, D = fs.prepare(df, fit=True)
-    cfg.model.num_features = X.shape[2]
+# ─── Data ──────────────────────────────────────────────────────────
+if DATA_SOURCE == "real":
+    print(f"\n[1/3] Loading real MIT Supercloud data ({MAX_JOBS} jobs)...")
+    X, Y, S, D = prepare_real_data(cfg, f"{BASE}/real_data", max_jobs=MAX_JOBS,
+                                    stride=REAL_STRIDE,
+                                    force_download=not os.path.exists(f"{BASE}/real_data/dataset.pkl"))
     np.save(f"{DATA_DIR}/X.npy", X)
     np.save(f"{DATA_DIR}/Y.npy", Y)
     np.save(f"{DATA_DIR}/S.npy", S)
     np.save(f"{DATA_DIR}/D.npy", D)
-    pickle.dump(cfg, open(f"{DATA_DIR}/cfg.pkl", "wb"))
-    print(f"  Features: {cfg.model.num_features} | X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
 else:
-    print("\n[1/3] Loading saved data...")
-    cfg = pickle.load(open(f"{DATA_DIR}/cfg.pkl", "rb"))
-    X = np.load(f"{DATA_DIR}/X.npy")
-    Y = np.load(f"{DATA_DIR}/Y.npy")
-    S = np.load(f"{DATA_DIR}/S.npy")
-    D = np.load(f"{DATA_DIR}/D.npy")
-    print(f"  Loaded: X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
+    if not os.path.exists(f"{DATA_DIR}/X.npy"):
+        print("\n[1/3] Generating data...")
+        df = generate_dataset(cfg)
+        df.to_parquet(f"{DATA_DIR}/colossus_{DAYS}d.parquet", index=False)
+        fs = FeatureStore(cfg)
+        X, Y, S, D = fs.prepare(df, fit=True)
+        cfg.model.num_features = X.shape[2]
+        np.save(f"{DATA_DIR}/X.npy", X)
+        np.save(f"{DATA_DIR}/Y.npy", Y)
+        np.save(f"{DATA_DIR}/S.npy", S)
+        np.save(f"{DATA_DIR}/D.npy", D)
+        pickle.dump(cfg, open(f"{DATA_DIR}/cfg.pkl", "wb"))
+        print(f"  Features: {cfg.model.num_features} | X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
+    else:
+        print("\n[1/3] Loading saved data...")
+        cfg = pickle.load(open(f"{DATA_DIR}/cfg.pkl", "rb"))
+        X = np.load(f"{DATA_DIR}/X.npy")
+        Y = np.load(f"{DATA_DIR}/Y.npy")
+        S = np.load(f"{DATA_DIR}/S.npy")
+        D = np.load(f"{DATA_DIR}/D.npy")
+        print(f"  Loaded: X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
 
 # ─── Resume check ──────────────────────────────────────────────────
 resume_ep = 0

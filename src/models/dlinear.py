@@ -14,8 +14,8 @@ class DLinear(nn.Module):
 
         self.trend_l = nn.Linear(lb, hz)
         self.seasonal_l = nn.Linear(lb, hz)
-        self.shead = nn.Sequential(nn.Linear(lb, 64), nn.ReLU(), nn.Linear(64, cfg.n_classes))
-        self.dir_head = nn.Sequential(nn.Linear(lb, 64), nn.ReLU(), nn.Linear(64, 2))
+        self.shead = nn.Sequential(nn.Linear(nf, 64), nn.ReLU(), nn.Linear(64, cfg.n_classes))
+        self.dir_head = nn.Sequential(nn.Linear(nf, 64), nn.ReLU(), nn.Linear(64, 2))
 
         self._init()
         print(f"  DLinear Params: {sum(p.numel() for p in self.parameters()):,}")
@@ -28,13 +28,14 @@ class DLinear(nn.Module):
                     nn.init.zeros_(m.bias)
 
     def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        B, T, F = x.shape
+        B, T, nf = x.shape
 
         x_t = x.transpose(1, 2)
         trend = self.avg(x_t)
         seasonal = x_t - trend
 
         pp = self.trend_l(trend) + self.seasonal_l(seasonal)
-        pw = pp[:, 0, :]
+        pw = pp.mean(dim=1)
 
-        return pw, self.shead(x[:, :, 0]), self.dir_head(x[:, :, 0])
+        x_pool = x.mean(dim=1)
+        return pw, self.shead(x_pool), self.dir_head(x_pool)

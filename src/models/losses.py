@@ -9,7 +9,7 @@ from typing import Tuple, Dict
 
 
 class SpikeLoss(nn.Module):
-    def __init__(self, uw=5.0, ow=1.0, ss=1.5, cw=0.5, dw=100.0):
+    def __init__(self, uw=5.0, ow=1.0, ss=1.5, cw=1.0, dw=5.0):
         super().__init__()
         self.uw=uw; self.ow=ow; self.ss=ss; self.cw=cw; self.dw=dw
 

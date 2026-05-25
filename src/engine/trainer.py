@@ -13,7 +13,7 @@ from src.models.losses import SpikeLoss
 
 
 class Trainer:
-    def __init__(self, model, cfg: Config, use_dp=True):
+    def __init__(self, model, cfg: Config, y_mean=0.0, y_std=1.0, use_dp=True):
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.dev)
         self.model_raw = model
@@ -22,6 +22,8 @@ class Trainer:
             self.model = nn.DataParallel(self.model)
             self.is_parallel = True
         self.cfg = cfg
+        self.y_mean = y_mean
+        self.y_std = y_std
         self.loss_fn = SpikeLoss(cfg.train.under_w, cfg.train.over_w,
                                   cfg.train.spike_std, cfg.train.cls_w,
                                   cfg.train.dir_w)
@@ -86,28 +88,31 @@ class Trainer:
             vm=self._epoch(vdl,False)
             dt=time.time()-t0
 
+            vm_mae_mw = vm['mae'] * self.y_std
             self.hist["tl"].append(tm["loss"])
             self.hist["vl"].append(vm["loss"])
-            self.hist["vm"].append(vm["mae"])
+            self.hist["vm"].append(vm_mae_mw)
             self.hist["vs"].append(vm["sa"])
             self.hist["vd"].append(vm["da"])
 
             if ep%5==0 or ep==1:
                 print(f"  Ep {ep:3d}/{tc.epochs} | TL:{tm['loss']:.4f} VL:{vm['loss']:.4f} "
-                      f"| MAE:{vm['mae']:.2f}MW SigAcc:{vm['sa']:.3f} "
+                      f"| MAE:{vm_mae_mw:.2f}MW SigAcc:{vm['sa']:.3f} "
                       f"DirAcc:{vm['da']:.3f} DirLoss:{vm['dl']:.4f} "
                       f"LR:{self.opt.param_groups[0]['lr']:.2e} {dt:.1f}s")
 
             sd = self.model_raw.state_dict() if self.is_parallel else self.model.state_dict()
+            ckpt_base = {"ep": ep, "model": sd, "opt": self.opt.state_dict(),
+                         "y_mean": self.y_mean, "y_std": self.y_std}
             if vm["loss"]<best:
                 best=vm["loss"]; wait=0
-                ckpt = {"ep":ep,"model":sd,"opt":self.opt.state_dict(),"vl":best}
+                ckpt = {**ckpt_base, "vl": best}
                 torch.save(ckpt, "checkpoints/best.pt")
                 if drive_dir:
                     torch.save(ckpt, f"{drive_dir}/best.pt")
 
             if drive_dir and ep % save_every == 0:
-                torch.save({"ep":ep,"model":sd,"opt":self.opt.state_dict(),"vl":vm["loss"]},
+                torch.save({**ckpt_base, "vl": vm["loss"]},
                            f"{drive_dir}/checkpoint_ep{ep}.pt")
 
             if vm["loss"]>=best:

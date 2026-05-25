@@ -22,7 +22,7 @@ LR = 1e-3 if MODEL_TYPE == "dlinear" else 1e-4
 WARMUP = 15 if MODEL_TYPE == "dlinear" else 500
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
-DIR_W = 100.0
+DIR_W = 5.0
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_REPO = "vedkumr/energivanu"
 
@@ -129,13 +129,18 @@ if ckpts:
 # ─── Model ─────────────────────────────────────────────────────────
 print("\n[2/3] Building model...")
 split = int(0.8 * len(X))
+y_mean = float(Y[:split].mean())
+y_std = float(Y[:split].std()) + 1e-8
+Y = (Y - y_mean) / y_std
+print(f"  Y standardized: mean={y_mean:.2f}MW, std={y_std:.2f}MW → N(0,1)")
+
 if cfg.model.model_type == "dlinear":
     model = DLinear(cfg.model)
     print(f"  Model: DLinear ({sum(p.numel() for p in model.parameters()):,} params)")
 else:
     model = ColossusTransformer(cfg.model)
     print(f"  Model: Transformer ({sum(p.numel() for p in model.parameters()):,} params)")
-trainer = Trainer(model, cfg, use_dp=(MODEL_TYPE != "dlinear"))
+trainer = Trainer(model, cfg, y_mean=y_mean, y_std=y_std, use_dp=(MODEL_TYPE != "dlinear"))
 
 if resume_ep > 0:
     ckpt = torch.load(ckpts[-1], map_location=device, weights_only=False)
@@ -144,6 +149,7 @@ if resume_ep > 0:
     print(f"  Resuming from epoch {resume_ep}")
 
 # ─── Train ─────────────────────────────────────────────────────────
+print(f"\n  Baseline: std(y)={y_std:.2f}MW → predicting mean gives MAE≈{y_std:.2f}MW")
 print("\n[3/3] Training...")
 t_start = time.time()
 history = trainer.fit(

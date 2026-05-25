@@ -10,8 +10,7 @@ class DLinear(nn.Module):
         lb = cfg.lookback
         hz = cfg.horizon
 
-        self.kernel = 25
-        self.pad = self.kernel // 2
+        self.avg = nn.AvgPool1d(25, 1, padding=12)
 
         self.trend_l = nn.Linear(lb, hz)
         self.seasonal_l = nn.Linear(lb, hz)
@@ -32,8 +31,7 @@ class DLinear(nn.Module):
         B, T, F = x.shape
 
         x_t = x.transpose(1, 2)
-        x_p = F.pad(x_t, (self.pad, self.pad), mode="reflect")
-        trend = F.avg_pool1d(x_p, self.kernel, stride=1)
+        trend = self.avg(x_t)
         seasonal = x_t - trend
 
         pp = self.trend_l(trend) + self.seasonal_l(seasonal)

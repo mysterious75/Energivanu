@@ -15,11 +15,11 @@ N_HEADS = 4
 D_FF = 512
 LOOKBACK = 60
 HORIZON = 60
-BATCH_SIZE = 4096 if MODEL_TYPE == "dlinear" else 128
+BATCH_SIZE = 16384 if MODEL_TYPE == "dlinear" else 128
 EPOCHS = 80
 PATIENCE = 0
 LR = 1e-3 if MODEL_TYPE == "dlinear" else 1e-4
-WARMUP = 15 if MODEL_TYPE == "dlinear" else 500
+WARMUP = 4 if MODEL_TYPE == "dlinear" else 500
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
 DIR_W = 5.0
@@ -140,7 +140,7 @@ if cfg.model.model_type == "dlinear":
 else:
     model = ColossusTransformer(cfg.model)
     print(f"  Model: Transformer ({sum(p.numel() for p in model.parameters()):,} params)")
-trainer = Trainer(model, cfg, y_mean=y_mean, y_std=y_std, use_dp=(MODEL_TYPE != "dlinear"))
+trainer = Trainer(model, cfg, y_mean=y_mean, y_std=y_std, use_dp=True, num_workers=2)
 
 if resume_ep > 0:
     ckpt = torch.load(ckpts[-1], map_location=device, weights_only=False)

@@ -13,7 +13,7 @@ from src.models.losses import SpikeLoss
 
 
 class Trainer:
-    def __init__(self, model, cfg: Config, y_mean=0.0, y_std=1.0, use_dp=True):
+    def __init__(self, model, cfg: Config, y_mean=0.0, y_std=1.0, use_dp=True, num_workers=4):
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.dev)
         self.model_raw = model
@@ -24,6 +24,7 @@ class Trainer:
         self.cfg = cfg
         self.y_mean = y_mean
         self.y_std = y_std
+        self.num_workers = num_workers
         self.loss_fn = SpikeLoss(cfg.train.under_w, cfg.train.over_w,
                                   cfg.train.spike_std, cfg.train.cls_w,
                                   cfg.train.dir_w)
@@ -66,8 +67,8 @@ class Trainer:
                             torch.LongTensor(Str), torch.LongTensor(Dtr))
         vds = TensorDataset(torch.FloatTensor(Xvl), torch.FloatTensor(Yvl),
                             torch.LongTensor(Svl), torch.LongTensor(Dvl))
-        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        tdl = DataLoader(tds, tc.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True, prefetch_factor=2)
+        vdl = DataLoader(vds, tc.batch_size, shuffle=False, num_workers=self.num_workers, pin_memory=True, prefetch_factor=2)
 
         total = len(tdl)*tc.epochs; best=float("inf"); wait=0
         Path("checkpoints").mkdir(exist_ok=True)
@@ -79,7 +80,9 @@ class Trainer:
             self.hist = {"tl":[],"vl":[],"vm":[],"vs":[],"vd":[]}
             print(f"\n  Resuming from epoch {start_ep}...")
 
-        print(f"\n  Device: {self.dev} | Train: {len(tds):,} | Val: {len(vds):,}")
+        ngpu = torch.cuda.device_count()
+        print(f"\n  Device: {self.dev} | GPUs: {ngpu} | Workers: {self.num_workers}")
+        print(f"  Train: {len(tds):,} | Val: {len(vds):,}")
         print(f"  Batch: {tc.batch_size} | Epochs: {tc.epochs} (remaining: {tc.epochs-resume_from})\n")
 
         for ep in range(start_ep, tc.epochs+1):

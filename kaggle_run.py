@@ -19,9 +19,9 @@ D_FF = 512
 LOOKBACK = 60
 HORIZON = 60
 BATCH_SIZE = 256
-EPOCHS = 80
+EPOCHS = 55
 PATIENCE = 0
-LR = 1e-4
+LR = 5e-6
 WARMUP = 500
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
@@ -130,17 +130,13 @@ else:
         D = np.load(f"{DATA_DIR}/D.npy")
         print(f"  Loaded: X:{X.shape} Y:{Y.shape} S:{S.shape} D:{D.shape}")
 
-# ─── Resume check ──────────────────────────────────────────────────
+# ─── Resume from best checkpoint ──────────────────────────────────
 resume_ep = 0
-ckpts = sorted(glob.glob(f"{CKPT_DIR}/checkpoint_ep*.pt"))
-if not ckpts:
-    ckpts = sorted(glob.glob(f"{CKPT_DIR}/*.pt"))
-if ckpts:
-    last = ckpts[-1]
-    m = re.search(r'ep(\d+)', str(last))
-    if m:
-        resume_ep = int(m.group(1))
-        print(f"\n  Found checkpoint at epoch {resume_ep}")
+RESUME_CKPT = f"{CKPT_DIR}/best.pt"
+if os.path.exists(RESUME_CKPT):
+    ckpt_info = torch.load(RESUME_CKPT, map_location="cpu", weights_only=False)
+    resume_ep = ckpt_info["ep"]
+    print(f"\n  Found best checkpoint at epoch {resume_ep} (LR: {LR:.0e})")
 
 # ─── Model ─────────────────────────────────────────────────────────
 print("\n[2/3] Building model...")
@@ -159,7 +155,7 @@ else:
 trainer = Trainer(model, cfg, y_mean=y_mean, y_std=y_std, use_dp=True, num_workers=2)
 
 if resume_ep > 0:
-    ckpt = torch.load(ckpts[-1], map_location=device, weights_only=False)
+    ckpt = torch.load(RESUME_CKPT, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
     trainer.opt.load_state_dict(ckpt["opt"])
     print(f"  Resuming from epoch {resume_ep}")

@@ -113,15 +113,14 @@ class Trainer:
                 torch.save(ckpt, "checkpoints/best.pt")
                 if drive_dir:
                     torch.save(ckpt, f"{drive_dir}/best.pt")
+            else:
+                wait+=1
+                if tc.patience > 0 and wait>=tc.patience:
+                    print(f"\n  Early stop at {ep}"); break
 
             if drive_dir and ep % save_every == 0:
                 torch.save({**ckpt_base, "vl": vm["loss"]},
                            f"{drive_dir}/checkpoint_ep{ep}.pt")
-
-            elif tc.patience > 0:
-                wait+=1
-                if wait>=tc.patience:
-                    print(f"\n  Early stop at {ep}"); break
 
         print(f"\n  Best val loss: {best:.4f}")
         return self.hist

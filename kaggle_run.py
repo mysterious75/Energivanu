@@ -8,18 +8,18 @@ warnings.filterwarnings("ignore")
 
 # ─── Config ────────────────────────────────────────────────────────
 DAYS = 30
-MODEL_TYPE = "dlinear"
+MODEL_TYPE = "transformer"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4
 D_FF = 512
 LOOKBACK = 60
 HORIZON = 60
-BATCH_SIZE = 16384 if MODEL_TYPE == "dlinear" else 128
+BATCH_SIZE = 256
 EPOCHS = 80
-PATIENCE = 0
-LR = 1e-3 if MODEL_TYPE == "dlinear" else 1e-4
-WARMUP = 4 if MODEL_TYPE == "dlinear" else 500
+PATIENCE = 5
+LR = 1e-4
+WARMUP = 500
 WEIGHT_DECAY = 3e-4
 DROPOUT = 0.35
 DIR_W = 5.0

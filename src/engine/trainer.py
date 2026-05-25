@@ -13,12 +13,12 @@ from src.models.losses import SpikeLoss
 
 
 class Trainer:
-    def __init__(self, model, cfg: Config):
+    def __init__(self, model, cfg: Config, use_dp=True):
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.dev)
         self.model_raw = model
         self.is_parallel = False
-        if torch.cuda.device_count() > 1:
+        if use_dp and torch.cuda.device_count() > 1:
             self.model = nn.DataParallel(self.model)
             self.is_parallel = True
         self.cfg = cfg

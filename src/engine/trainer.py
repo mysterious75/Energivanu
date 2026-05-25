@@ -118,9 +118,9 @@ class Trainer:
                 torch.save({**ckpt_base, "vl": vm["loss"]},
                            f"{drive_dir}/checkpoint_ep{ep}.pt")
 
-            if vm["loss"]>=best:
+            elif tc.patience > 0:
                 wait+=1
-                if tc.patience > 0 and wait>=tc.patience:
+                if wait>=tc.patience:
                     print(f"\n  Early stop at {ep}"); break
 
         print(f"\n  Best val loss: {best:.4f}")

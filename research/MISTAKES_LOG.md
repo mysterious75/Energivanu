@@ -172,6 +172,30 @@
 **Fix**: Disabled torch.compile, removed from both kaggle_run.py and run_experiments.py
 **Lesson**: torch.compile must be applied AFTER DataParallel, or use DDP instead
 
+### MISTAKE #24 — Patience=0 Wastes Compute
+**Date**: 2026-05-27
+**Context**: Set patience=0 to run all epochs and "see full curve"
+**What happened**: Model plateaued at epoch 80, ran 40 more epochs with no improvement
+**Root cause**: With patience=0, training never stops early even when no progress
+**Fix**: Set patience=20 — enough to see trends, but stops when stuck
+**Lesson**: patience=0 is only for debugging. For production, use patience=15-25.
+
+### MISTAKE #25 — Uncertainty Weighting Didn't Help Direction
+**Date**: 2026-05-27
+**Context**: Used Kendall et al. uncertainty weighting to balance power/signal/direction losses
+**What happened**: Direction weight ended up LOWEST (1.46) when it should be HIGHEST. DirAcc hit 56% but DirLoss barely moved (0.693→0.681)
+**Root cause**: Uncertainty weighting reduces weight for tasks with LOW loss (direction CE ≈ 0.69 is tiny vs power MSE ≈ 15,000). It optimizes for loss magnitude, not task importance.
+**Fix**: Use GradNorm or manual weighting with direction_w=50+ for direction task
+**Lesson**: Uncertainty weighting assumes all tasks are equally important. For imbalanced tasks, manual or gradient-based weighting is better.
+
+### MISTAKE #26 — Numpy float32 Not JSON Serializable
+**Date**: 2026-05-27
+**Context**: Saving experiment results to JSON after training
+**What happened**: TypeError: Object of type float32 is not JSON serializable
+**Root cause**: numpy float32 values from `min(history['vm'])` etc. are not native Python floats
+**Fix**: Wrap all numpy values with `float()` before JSON dump
+**Lesson**: Always convert numpy types to native Python types for JSON serialization
+
 ---
 
 ## Key Principles Learned
@@ -187,4 +211,8 @@
 10. Signal thresholds must match data distribution (90th/95th %ile)
 11. Smooth data = memorization, not learning
 12. Composite loss hides conflicting trends
+13. patience=0 only for debugging, use patience=20 for production
+14. Uncertainty weighting favors LOW loss tasks, not IMPORTANT tasks
+15. Direction head needs dedicated features (momentum, rate-of-change)
+16. numpy float32 must be converted to Python float for JSON
 13. Direction is classification, not regression. BCE > MSE for sign learning

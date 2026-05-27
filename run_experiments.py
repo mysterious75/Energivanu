@@ -213,16 +213,16 @@ def run_experiment(exp, data_dir, base_dir):
     )
     t_total = time.time() - t0
 
-    # Save results
+    # Save results (convert numpy float32 to Python float for JSON)
     results = {
         "name": exp['name'],
         "desc": exp['desc'],
         "config": exp,
-        "best_mae": min(history['vm']),
-        "best_sigacc": max(history['vs']),
-        "best_diracc": max(history['vd']),
-        "persistence_mae": persistence_mae,
-        "time_min": t_total / 60,
+        "best_mae": float(min(history['vm'])),
+        "best_sigacc": float(max(history['vs'])),
+        "best_diracc": float(max(history['vd'])),
+        "persistence_mae": float(persistence_mae),
+        "time_min": float(t_total / 60),
         "epochs_trained": len(history['tl']),
     }
 

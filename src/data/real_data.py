@@ -196,7 +196,7 @@ def prepare(cfg: Config, data_dir: str = None,
 
     X, Y, S, D = [], [], [], []
     for i in range(lb, len(F) - hz):
-        window = F[i - lb_real:i]
+        window = F[i - lb:i]
         mu = window.mean(0, keepdims=True)
         sd = window.std(0, keepdims=True) + 1e-8
         X.append((window - mu) / sd)

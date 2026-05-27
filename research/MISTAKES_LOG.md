@@ -164,6 +164,14 @@
 **Fix**: Added `list(self.loss_fn.parameters())` to optimizer
 **Lesson**: When loss has learnable parameters, include them in optimizer
 
+### MISTAKE #23 — torch.compile Conflicts with DataParallel
+**Date**: 2026-05-26
+**Context**: Applied torch.compile before DataParallel wrapping
+**What happened**: AttributeError: 'TSMixer' object has no attribute 'blocks'
+**Root cause**: torch.compile creates wrapper that doesn't expose module attributes when DataParallel replicates
+**Fix**: Disabled torch.compile, removed from both kaggle_run.py and run_experiments.py
+**Lesson**: torch.compile must be applied AFTER DataParallel, or use DDP instead
+
 ---
 
 ## Key Principles Learned

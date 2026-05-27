@@ -186,12 +186,8 @@ def run_experiment(exp, data_dir, base_dir):
     else:
         model = ColossusTransformer(cfg.model)
 
-    # Compile
-    if hasattr(torch, 'compile'):
-        try:
-            model = torch.compile(model, mode="reduce-overhead")
-        except:
-            pass
+    # NOTE: torch.compile disabled — conflicts with DataParallel
+    # Can enable later if using single GPU or DDP
 
     trainer = Trainer(model, cfg, y_mean=y_mean, y_std=y_std,
                       use_dp=True, num_workers=2, use_amp=True)

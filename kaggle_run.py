@@ -236,13 +236,8 @@ elif MODEL_TYPE == "nlinear":
 else:
     model = ColossusTransformer(cfg.model)
 
-# torch.compile
-if USE_COMPILE and hasattr(torch, 'compile'):
-    try:
-        model = torch.compile(model, mode="reduce-overhead")
-        print("  torch.compile enabled")
-    except Exception as e:
-        print(f"  torch.compile skipped: {e}")
+# NOTE: torch.compile disabled — conflicts with DataParallel
+# Can enable later if using single GPU or DDP
 
 trainer = Trainer(
     model, cfg, y_mean=y_mean, y_std=y_std,

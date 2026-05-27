@@ -5,3 +5,7 @@ checkpoints/
 .env
 .ipynb_checkpoints/
 research/
+colab_chronos.py
+colab_chronos.ipynb
+solve-options.md
+FREE_GPU_GUIDE.md

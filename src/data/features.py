@@ -24,16 +24,11 @@ class FeatureStore:
         self.cols: list = []
 
     def _add_rolling(self, df):
-        # Rolling stats on gpu_power_mw at 6 window sizes
-        for wn, w in [("15s",3),("30s",6),("1m",12),("2m",24),("3m",36),("6m",72),("10m",120)]:
+        for wn, w in [("30s",6),("1m",12),("3m",36),("6m",72)]:
             df[f"pm_{wn}"] = df["gpu_power_mw"].rolling(w,min_periods=1).mean()
             df[f"ps_{wn}"] = df["gpu_power_mw"].rolling(w,min_periods=1).std().fillna(0)
             df[f"sw_{wn}"] = (df["gpu_power_mw"].rolling(w,min_periods=1).max()
                               - df["gpu_power_mw"].rolling(w,min_periods=1).min())
-        # Rolling percentiles
-        for wn, w in [("3m",36),("6m",72)]:
-            df[f"pp10_{wn}"] = df["gpu_power_mw"].rolling(w,min_periods=1).quantile(0.1)
-            df[f"pp90_{wn}"] = df["gpu_power_mw"].rolling(w,min_periods=1).quantile(0.9)
 
         # Acceleration (second derivative)
         df["accel"] = df["pwr_rate"].diff().fillna(0)/5
@@ -78,18 +73,21 @@ class FeatureStore:
 
         return df
 
-    def prepare(self, df, fit=True, stride=4):
+    def prepare(self, df, fit=True, stride=2):
         df = self._add_rolling(df.copy())
 
         rolling_cols = [c for c in df.columns if any(c.startswith(p) for p in
-                        ["pm_","ps_","sw_","pp10_","pp90_","pwr_lag","solar_lag",
-                         "grid_lag","solar_rm","grid_rm","batt_rm"])]
+                        ["pm_","ps_","sw_"])]
+        lag_cols = [c for c in df.columns if c.startswith("pwr_lag1")
+                    or c.startswith("solar_lag1") or c.startswith("grid_lag1")]
+        xcol_cols = [c for c in df.columns if c.startswith("solar_rm")
+                     or c.startswith("grid_rm") or c.startswith("batt_rm")]
         other_cols = ["accel","g_stress","sol_avail","batt_head",
                       "solar_delta","grid_delta","batt_delta","temp_delta",
                       "hour_sin","hour_cos","dow_sin","dow_cos",
-                      "pwr_x_solar","pwr_x_stress"]
+                      "pwr_x_solar"]
 
-        self.cols = BASE_COLS + rolling_cols + other_cols
+        self.cols = BASE_COLS + rolling_cols + lag_cols + xcol_cols + other_cols
         self.cols = list(dict.fromkeys(self.cols))
 
         F = np.nan_to_num(df[self.cols].values.astype(np.float32))

@@ -2,7 +2,7 @@
 ENERGIVANU — Production Training Script v3
 Optimized for Kaggle 2x T4 GPU with ALL fixes and multiple model support
 
-MODELS: transformer, dlinear, tsmixer, nlinear
+MODELS: transformer, dlinear, tsmixer, nlinear, autoformer
 FIXES:
   1. Uncertainty Weighting (Kendall et al.) for loss balancing
   2. Direction Classification Head (BCE, not MSE-on-diffs)
@@ -36,8 +36,8 @@ warnings.filterwarnings("ignore")
 DATA_SOURCE = "synthetic"        # "synthetic" | "real"
 DAYS = 30
 
-# Model: "transformer" | "dlinear" | "tsmixer" | "nlinear"
-MODEL_TYPE = "tsmixer"
+# Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
+MODEL_TYPE = "autoformer"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4
@@ -50,7 +50,7 @@ DROPOUT = 0.35
 BATCH_SIZE = 256
 EPOCHS = 120
 PATIENCE = 0
-LR = 5e-6
+LR = 1e-4
 WARMUP = 500
 WEIGHT_DECAY = 3e-4
 GRAD_CLIP = 1.0
@@ -108,6 +108,7 @@ from src.data.features import FeatureStore
 from src.models.dlinear import DLinear
 from src.models.transformer import ColossusTransformer
 from src.models.tsmixer import TSMixer, NLinear
+from src.models.autoformer import AutoformerModel
 from src.engine.trainer import Trainer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -210,10 +211,21 @@ resume_ep = 0
 RESUME_CKPT = f"{CKPT_DIR}/latest.pt"
 if not os.path.exists(RESUME_CKPT):
     RESUME_CKPT = f"{CKPT_DIR}/best.pt"
-if os.path.exists(RESUME_CKPT):
-    ckpt_info = torch.load(RESUME_CKPT, map_location="cpu", weights_only=False)
-    resume_ep = ckpt_info.get("ep", 0)
-    print(f"\n  Checkpoint found at epoch {resume_ep}")
+model_type_file = f"{CKPT_DIR}/.model_type"
+if os.path.exists(RESUME_CKPT) and os.path.exists(model_type_file):
+    saved_type = open(model_type_file).read().strip()
+    if saved_type == MODEL_TYPE:
+        ckpt_info = torch.load(RESUME_CKPT, map_location="cpu", weights_only=False)
+        resume_ep = ckpt_info.get("ep", 0)
+        print(f"\n  Checkpoint ({saved_type}) found at epoch {resume_ep}")
+    else:
+        print(f"\n  Model type changed ({saved_type} -> {MODEL_TYPE}), starting fresh")
+        resume_ep = 0
+elif os.path.exists(RESUME_CKPT):
+    print(f"\n  No model type marker, starting fresh")
+    resume_ep = 0
+else:
+    print(f"\n  No checkpoint found, starting fresh")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MODEL
@@ -233,11 +245,16 @@ elif MODEL_TYPE == "tsmixer":
     model = TSMixer(cfg.model)
 elif MODEL_TYPE == "nlinear":
     model = NLinear(cfg.model)
+elif MODEL_TYPE == "autoformer":
+    model = AutoformerModel(cfg.model)
 else:
     model = ColossusTransformer(cfg.model)
 
 # NOTE: torch.compile disabled — conflicts with DataParallel
 # Can enable later if using single GPU or DDP
+
+with open(f"{CKPT_DIR}/.model_type", "w") as f:
+    f.write(MODEL_TYPE)
 
 trainer = Trainer(
     model, cfg, y_mean=y_mean, y_std=y_std,

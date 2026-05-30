@@ -6,6 +6,86 @@ DLinear (15K params) achieves **MAE 53 MW** vs persistence baseline **3.91 MW** 
 
 ---
 
+## 🔴 Colab/Chronos Session Mistakes (May 2026)
+
+### 14. `amazon/chronos-2` — Model Doesn't Exist
+**Error**: `TypeError: ChronosConfig.__init__() got an unexpected keyword argument 'input_patch_size'`
+**Cause**: Tried to load `amazon/chronos-2` which doesn't exist. Chronos-Bolt needs newer `chronos-forecasting` package.
+**Fix**: Use `amazon/chronos-t5-base` (works with older package) OR install from GitHub: `pip install git+https://github.com/amazon-science/chronos-forecasting.git`
+
+### 15. `torch_dtype` vs `dtype` — Deprecated Parameter
+**Warning**: `torch_dtype is deprecated! Use dtype instead!`
+**Fix**: Use `dtype=torch.float16` instead of `torch_dtype=torch.float16`
+
+### 16. `total_mem` vs `total_memory` — Wrong Attribute
+**Error**: `AttributeError: 'torch._C._CudaDeviceProperties' object has no attribute 'total_mem'`
+**Fix**: Use `torch.cuda.get_device_properties(0).total_memory` (with try/except fallback)
+
+### 17. `--upgrade` All Packages — Broke numpy
+**Error**: `ImportError: cannot import name '_center' from 'numpy._core.umath'`
+**Cause**: `pip install --upgrade chronos-forecasting torch numpy pandas matplotlib` upgraded numpy to 2.4.6 which is incompatible with Colab's environment.
+**Fix**: Only upgrade chronos-forecasting: `pip install --upgrade chronos-forecasting -q`
+
+### 18. `pipeline` Not Defined — Wrong Cell Order
+**Error**: `NameError: name 'pipeline' is not defined`
+**Cause**: Ran Cell 6 before Cell 4. Cell 4 creates the `pipeline` variable.
+**Fix**: Always run cells in order: 1→2→3→4→5→6→7→8→9→10
+
+### 19. `median_forecast` Shape — Need `.flatten()`
+**Error**: Signal classification and direction prediction failed on multi-dim tensor
+**Cause**: `median_forecast` is 2D tensor, needs `.flatten()` for iteration
+**Fix**: Use `median_forecast.flatten()` before iterating
+
+### 20. Prediction Length Mismatch
+**Issue**: Code had `prediction_length = 120` (10 min) but results showed 2400 points
+**Cause**: User ran different version or modified prediction_length
+**Fix**: Verify prediction_length matches expected forecast horizon
+
+### 21. LoRA Params `requires_grad` Not Set
+**Error**: `ValueError: optimizer got an empty parameter list`
+**Cause**: Froze all model params with `param.requires_grad = False`, then added LoRA layers, but LoRA params inherited `requires_grad = False`
+**Fix**: After adding LoRA, explicitly set `param.requires_grad = True` for all LoRA params:
+```python
+for name, param in model.named_parameters():
+    if 'lora' in name:
+        param.requires_grad = True
+```
+
+### 22. LoRA Layers Not Added (setattr on dict copy)
+**Error**: Still 0 trainable params after LoRA setup
+**Cause**: `dict(model.named_modules())` creates a copy, so `setattr(parent, child_name, lora_layer)` doesn't modify the actual model
+**Fix**: Use recursive `named_children()` traversal instead:
+```python
+def replace_linear_with_lora(model, rank=16):
+    for name, child in list(model.named_children()):
+        if isinstance(child, nn.Linear):
+            lora = LoRALinear(child.in_features, child.out_features, rank)
+            lora.original.weight.data = child.weight.data.clone()
+            setattr(model, name, lora)
+        else:
+            replace_linear_with_lora(child, rank)
+```
+
+---
+
+## 🟡 Chronos-T5 Zero-Shot Results Summary
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Model | Chronos-T5 (201.4M params) | Zero-shot, no training |
+| Context | 17,280 points (24 hours) | 5-second intervals |
+| Prediction | 2,400 points (~3.3 hours) | Longer than expected 10 min |
+| Power Range | 44.7 - 71.3 MW | Synthetic data, mostly SAFE |
+| SAFE | 2,398 (99.9%) | Expected for synthetic data |
+| PREPARE | 2 (0.1%) | Barely triggered |
+| CRITICAL | 0 (0%) | Never triggered |
+| Direction UP | 1,244 (51.8%) | Near random (50%) |
+| Direction DOWN | 1,156 (48.2%) | Model didn't learn direction |
+
+**Conclusion**: Zero-shot Chronos-T5 works but doesn't learn patterns from synthetic data. Need real data for meaningful results.
+
+---
+
 ## 🔴 Critical (Architecture)
 
 ### 1. `pp[:, 0, :]` — 33/34 Features Discarded

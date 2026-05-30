@@ -116,7 +116,7 @@ print(f"\nDevice: {device}")
 if torch.cuda.is_available():
     for i in range(torch.cuda.device_count()):
         print(f"  GPU {i}: {torch.cuda.get_device_name(i)} "
-              f"({torch.cuda.get_device_properties(i).total_mem / 1e9:.1f} GB)")
+              f"({torch.cuda.get_device_properties(i).total_memory / 1e9:.1f} GB)")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HEARTBEAT

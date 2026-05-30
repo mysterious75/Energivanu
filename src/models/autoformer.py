@@ -46,10 +46,11 @@ class AutoCorrelation(nn.Module):
         K = self.k_proj(k).reshape(B, T, self.n_heads, dh).permute(0, 2, 1, 3)
         V = self.v_proj(v).reshape(B, T, self.n_heads, dh).permute(0, 2, 1, 3)
 
-        Q_fft = torch.fft.rfft(Q, dim=2)
-        K_fft = torch.fft.rfft(K, dim=2)
+        Q32, K32 = Q.float(), K.float()
+        Q_fft = torch.fft.rfft(Q32, dim=2)
+        K_fft = torch.fft.rfft(K32, dim=2)
         S = Q_fft * torch.conj(K_fft)
-        R = torch.fft.irfft(S, n=T, dim=2)
+        R = torch.fft.irfft(S, n=T, dim=2).to(Q.dtype)
         scores = R.sum(dim=-1).sum(dim=1)
 
         scores_delays = scores[:, 1:]

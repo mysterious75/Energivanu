@@ -1,6 +1,7 @@
 """
-ENERGIVANU — Synthetic Data Generator
+ENERGIVANU — Synthetic Data Generator v2
 Generates realistic Colossus GPU + Weather + Grid data.
+v2: More diverse spikes, weekday/weekend variation, load drift, 60-day support.
 """
 
 import numpy as np
@@ -21,23 +22,74 @@ class GPUData:
         hours = t * self.s.interval_sec / 3600
         days = hours / 24
 
-        base = 0.6 + 0.15 * np.sin(2*np.pi*hours/8) + 0.1*np.sin(2*np.pi*hours/24)
+        # Weekday/weekend modulation (weekends = lighter load)
+        dow = (days % 7).astype(int)
+        is_weekend = np.isin(dow, [5, 6])
+        weekend_factor = np.where(is_weekend, 0.7, 1.0)
+
+        # Gradual load drift over time (simulates cluster scaling)
+        drift = 1.0 + 0.05 * np.sin(2 * np.pi * days / 60)
+
+        # Base load with daily + weekly patterns
+        base = (0.6 + 0.15 * np.sin(2*np.pi*hours/8)
+                + 0.1*np.sin(2*np.pi*hours/24)
+                + 0.05*np.sin(2*np.pi*days/7))
+        base = base * weekend_factor * drift
+
         spikes = np.zeros(n)
 
         if self.s.pattern_spikes:
-            scheduled_hours = np.arange(0, 24, 4)
-            for sh in scheduled_hours:
-                start = int(sh * 3600 / self.s.interval_sec)
-                for offset in range(0, self.s.num_days):
-                    day_start = start + offset * int(24 * 3600 / self.s.interval_sec)
-                    if day_start + 60 < n:
-                        dur = np.random.randint(30, 90)
-                        spikes[day_start:min(day_start+dur, n)] = np.random.uniform(0.2, 0.45)
-            cascade_t = np.random.randint(n // 4, n // 2)
-            cascade_dur = np.random.randint(60, 180)
-            for j in range(0, cascade_dur, 5):
-                if cascade_t + j < n:
-                    spikes[cascade_t + j] = min(1.0, 0.3 + 0.02 * j)
+            # Pattern 1: Scheduled training runs every 4h (weekday only)
+            for day in range(int(days[-1]) + 1):
+                for sh in [0, 4, 8, 12, 16, 20]:
+                    if is_weekend[day * 1728] and np.random.rand() < 0.5:
+                        continue
+                    start = int((day * 24 + sh) * 3600 / self.s.interval_sec)
+                    if start + 60 >= n:
+                        continue
+                    dur = np.random.randint(30, 120)
+                    mag = np.random.uniform(0.2, 0.5)
+                    # Smooth ramp up and down
+                    ramp_up = min(15, dur // 3)
+                    ramp_down = min(10, dur // 4)
+                    for j in range(dur):
+                        idx = start + j
+                        if idx >= n:
+                            break
+                        if j < ramp_up:
+                            factor = j / ramp_up
+                        elif j > dur - ramp_down:
+                            factor = (dur - j) / ramp_down
+                        else:
+                            factor = 1.0
+                        spikes[idx] = max(spikes[idx], mag * factor)
+
+            # Pattern 2: Large cascade event (cluster stress test)
+            cascade_start = np.random.randint(n // 4, n // 2)
+            cascade_dur = np.random.randint(120, 300)
+            for j in range(cascade_dur):
+                idx = cascade_start + j
+                if idx >= n:
+                    break
+                progress = j / cascade_dur
+                if progress < 0.3:
+                    mag = 0.3 + progress * 2.33
+                elif progress < 0.7:
+                    mag = 1.0
+                else:
+                    mag = 1.0 - (progress - 0.7) * 3.33
+                spikes[idx] = max(spikes[idx], min(1.0, mag * 0.5))
+
+            # Pattern 3: Random micro-bursts (job submissions)
+            burst_count = n // 500
+            burst_starts = np.random.choice(range(100, n - 100), size=burst_count, replace=False)
+            for bs in burst_starts:
+                dur = np.random.randint(5, 30)
+                mag = np.random.uniform(0.05, 0.2)
+                for j in range(dur):
+                    if bs + j < n:
+                        spikes[bs + j] = max(spikes[bs + j], mag)
+
         else:
             idx = np.random.choice(range(100, n-100), size=n//200, replace=False)
             for i in idx:

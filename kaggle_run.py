@@ -34,7 +34,7 @@ warnings.filterwarnings("ignore")
 # ═══════════════════════════════════════════════════════════════════════════════
 
 DATA_SOURCE = "synthetic"        # "synthetic" | "real"
-DAYS = 30
+DAYS = 60
 
 # Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
 MODEL_TYPE = "autoformer"

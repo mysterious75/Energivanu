@@ -56,9 +56,9 @@ class FeatureStore:
 
         # Lag features (t-1, t-2, t-3 for key columns)
         for lag in [1, 2, 3]:
-            df[f"pwr_lag{lag}"] = df["gpu_power_mw"].shift(lag).fillna(method="bfill")
-            df[f"solar_lag{lag}"] = df["solar_mw"].shift(lag).fillna(method="bfill")
-            df[f"grid_lag{lag}"] = df["grid_mw"].shift(lag).fillna(method="bfill")
+            df[f"pwr_lag{lag}"] = df["gpu_power_mw"].shift(lag).bfill()
+            df[f"solar_lag{lag}"] = df["solar_mw"].shift(lag).bfill()
+            df[f"grid_lag{lag}"] = df["grid_mw"].shift(lag).bfill()
 
         # Delta features (rate of change for non-power columns)
         df["solar_delta"] = df["solar_mw"].diff().fillna(0)/5
@@ -78,10 +78,9 @@ class FeatureStore:
 
         return df
 
-    def prepare(self, df, fit=True):
+    def prepare(self, df, fit=True, stride=2):
         df = self._add_rolling(df.copy())
 
-        # Collect all feature columns (order doesn't matter, just need the set)
         rolling_cols = [c for c in df.columns if any(c.startswith(p) for p in
                         ["pm_","ps_","sw_","pp10_","pp90_","pwr_lag","solar_lag",
                          "grid_lag","solar_rm","grid_rm","batt_rm"])]
@@ -105,21 +104,24 @@ class FeatureStore:
 
         lb = self.cfg.model.lookback
         hz = self.cfg.model.horizon
-        X, Y, S, D = [], [], [], []
-        for i in range(lb, len(F)-hz):
-            X.append(F[i-lb:i])
-            future = T[i:i+hz]
-            Y.append(future)
-            mx = np.max(future)
-            S.append(2 if mx >= self.cfg.signal.critical_mw
-                     else 1 if mx >= self.cfg.signal.warning_mw else 0)
-            D.append(1 if future[-1] > future[0] else 0)
+        nf = F.shape[1]
+        N = (len(F) - lb - hz) // stride
 
-        X = np.array(X, dtype=np.float32)
-        Y = np.array(Y, dtype=np.float32)
-        S = np.array(S, dtype=np.int64)
-        D = np.array(D, dtype=np.int64)
-        print(f"  Features: {len(self.cols)} | X: {X.shape} | Y: {Y.shape}")
+        X = np.zeros((N, lb, nf), dtype=np.float32)
+        Y = np.zeros((N, hz), dtype=np.float32)
+        S = np.zeros(N, dtype=np.int64)
+        D = np.zeros(N, dtype=np.int64)
+
+        for i in range(N):
+            idx = lb + i * stride
+            X[i] = F[idx-lb:idx]
+            future = T[idx:idx+hz]
+            Y[i] = future
+            mx = future.max()
+            S[i] = 2 if mx >= self.cfg.signal.critical_mw else (1 if mx >= self.cfg.signal.warning_mw else 0)
+            D[i] = 1 if future[-1] > future[0] else 0
+
+        print(f"  Features: {len(self.cols)} | X: {X.shape} | Y: {Y.shape} | stride: {stride}")
         print(f"  SAFE:{(S==0).sum()} PREPARE:{(S==1).sum()} CRITICAL:{(S==2).sum()}")
         print(f"  Direction: UP:{(D==1).sum()} DOWN:{(D==0).sum()}")
         return X, Y, S, D

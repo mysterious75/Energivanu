@@ -78,7 +78,7 @@ class FeatureStore:
 
         return df
 
-    def prepare(self, df, fit=True, stride=2):
+    def prepare(self, df, fit=True, stride=4):
         df = self._add_rolling(df.copy())
 
         rolling_cols = [c for c in df.columns if any(c.startswith(p) for p in

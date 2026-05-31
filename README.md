@@ -45,12 +45,14 @@ Battery Pre-positioning + Grid Stability
 
 We tried 4 architectures:
 
-| Model | Params | MAE | SigAcc | Notes |
-|-------|--------|-----|--------|-------|
-| DLinear | 12K | 53 MW | 91% | Too simple, ignores 33/34 features |
-| TSMixer | ~50K | 5 MW | 93% | Good baseline, all-MLP |
-| Transformer | 1M | 3.57 MW | 93.3% | Best balance |
-| **Autoformer** | **851K** | **3.52 MW** | **94.0%** | Best MAE + SigAcc |
+| Model | Params | MAE | SigAcc | DirAcc | Notes |
+|-------|--------|-----|--------|--------|-------|
+| DLinear | 12K | 53 MW | 91% | — | Too simple, ignores 33/34 features |
+| TSMixer | ~50K | 5 MW | 93% | — | Good baseline, all-MLP |
+| Transformer | 1M | 3.57 MW | 93.3% | 57.3% | Best balance |
+| **Autoformer (Colab)** | **851K** | **3.52 MW** | **94.0%** | **53.5%** | **All-time best MAE** |
+| Autoformer (Kaggle, 60d, stride=2) | 851K | 4.54 MW | 88.9% | 53.5% | stride=2 cost ~1MW |
+| Transformer (Kaggle, log_var explosion) | 1M | ~5 MW | ~87% | ~55% | W[1]→29.56, VL→32 |
 
 Autoformer uses **series decomposition** (moving average to separate trend/seasonal) and **auto-correlation via FFT** instead of standard attention. This is better for time series because:
 1. Power data has strong periodic patterns (daily cycles, scheduled jobs)
@@ -97,9 +99,9 @@ MIT Supercloud cluster telemetry from AWS Open Data:
 
 | Metric | Target | Current Best | Status |
 |--------|--------|--------------|--------|
-| **MAE** | < 3.00 MW | 3.52 MW | 🔴 19% off |
+| **MAE** | < 3.00 MW | 3.52 MW (Autoformer, Colab) | 🔴 19% off |
 | **Signal Accuracy** | > 90% | 94.0% | ✅ |
-| **Direction Accuracy** | > 55% | 57.3% | 🟡 Marginal |
+| **Direction Accuracy** | > 55% | 57.3% (Transformer — marginal, likely noise) | 🟡 |
 | **Inference Latency** | < 100ms | ~50ms | ✅ |
 
 ---
@@ -150,12 +152,13 @@ energivanu/
 ### Kaggle
 
 ```python
-# Cell 1
-!rm -rf /kaggle/working/energivanu /kaggle/working/energivanu_prod
-!git clone https://github.com/mysterious75/Energivanu.git /kaggle/working/energivanu
+# Cell 1 — clone fresh (use for new Kaggle session)
+!git clone https://github.com/mysterious75/Energivanu.git
+%cd /kaggle/working/Energivanu
+!pip install -r requirements.txt
 
 # Cell 2
-%run /kaggle/working/energivanu/kaggle_run.py
+!python kaggle_run.py
 ```
 
 ### Configuration
@@ -178,11 +181,15 @@ BATCH_SIZE = 256             # Batch size (reduce if OOM)
 
 2. **FFT + AMP = careful**: cuFFT requires power-of-2 dimensions in FP16. Cast to FP32 for FFT operations.
 
-3. **Stride > 2 destroys temporal patterns**: For 5-second interval data, stride=2 is the maximum before losing critical dynamics (ramp-up patterns, micro-bursts).
+3. **Stride > 1 destroys temporal patterns**: For 5-second interval data, stride=2 costs ~1MW MAE. Every timestep matters.
 
 4. **Memory > compute on Colab**: The bottleneck is RAM (12GB), not GPU. Design data pipelines to fit: stride=2 + 48 features = ~5.9GB.
 
-5. **Early stopping bugs are subtle**: Always use `if/elif/else` chains, not separate `if` blocks, for mutually exclusive conditions.
+5. **Early stopping bugs are subtle**: Always use `if/elif/else` chains, not separate `if` blocks.
+
+6. **Uncertainty weighting is fragile**: Kendall uncertainty weighting can destabilize training when loss scales differ. `log_var` clamp [-5, 5] insufficient — W[1] reached 29.56. Fixed weights are safer.
+
+7. **Direction accuracy is a red herring**: Both models stuck at 53-57% on synthetic data with 5-second labels. This is a data labeling issue, not a model issue.
 
 ---
 

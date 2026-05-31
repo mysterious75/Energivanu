@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Built a Transformer-based GPU power forecasting system for xAI's Colossus (150K H100 GPUs). After 13+ debugging cycles, the best result is **MAE 3.52 MW** (target < 3 MW) with **93.3% signal accuracy**. Key learnings: architecture matters less than data quality, early stopping logic had a subtle if/elif bug, and memory management on Colab T4 requires careful stride/feature tuning.
+Built a Transformer-based GPU power forecasting system for xAI's Colossus (150K H100 GPUs). After 15+ debugging cycles, the best result is **MAE 3.52 MW** (target < 3 MW) with **93.3% signal accuracy** on synthetic data. Key learnings: stride=1 is critical for 5-second data, more features ≠ better, direction labels are inherently noisy at 5-second resolution, and model capacity (d_model=128) is the primary MAE bottleneck.
 
 ---
 
@@ -162,13 +162,13 @@ else:
 
 ## 🟢 Results Summary
 
-| Model | Data | Features | Stride | MAE | SigAcc | DirAcc |
-|-------|------|----------|--------|-----|--------|--------|
-| Transformer | 30d synthetic | 34 | 1 | 3.57 MW | 93.3% | 57.3% |
-| Transformer | real MIT | 34 | 1 | 3.56 MW | 93.3% | 57.3% |
-| Autoformer | 30d synthetic | 34 | 1 | 3.52 MW | 94.0% | 53.5% |
-| Autoformer | 60d synthetic | 71 | 4 | 5.0+ MW | 88% | 52% |
-| Autoformer | 60d synthetic | 48 | 2 | TBD | TBD | TBD |
+| Model | Data | Features | Stride | MAE | SigAcc | DirAcc | Persistence |
+|-------|------|----------|--------|-----|--------|--------|-------------|
+| Transformer | 30d synthetic | 34 | 1 | **3.57 MW** | **93.3%** | 57.3% | 3.91 MW ✅ |
+| Transformer | real MIT | 34 | 1 | **3.56 MW** | **93.3%** | 57.3% | 3.91 MW ✅ |
+| Autoformer | 30d synthetic | 34 | 1 | **3.52 MW** | **94.0%** | 53.5% | 3.98 MW ✅ |
+| Autoformer | 60d synthetic | 71 | 4 | 5.0+ MW | 88% | 52% | 3.88 MW ❌ |
+| Autoformer | 60d synthetic | 51 | 2 | **4.54 MW** | 88.9% | 53.5% | 3.88 MW ❌ |
 
 **Target**: MAE < 3.00 MW, SigAcc > 90%, DirAcc > 55%
 
@@ -176,14 +176,18 @@ else:
 
 ## 🔧 Current Blockers
 
-1. **MAE plateau at ~3.5 MW**: Both Transformer and Autoformer converge to similar MAE. Architecture is not the bottleneck.
-2. **DirAcc ~52-57%**: Barely above random (50%). Direction head receives insufficient gradient or the signal is too noisy.
-3. **Memory constraints**: Colab T4 (12GB RAM) limits data size. stride=2 + 48 features is the sweet spot.
+1. **stride=2 destroyed MAE**: Going from stride=1 to stride=2 cost ~1MW. 5-second temporal resolution is critical for capturing micro-bursts and ramp-up patterns.
+2. **More features = more noise**: 51 features performed worse than 34. Extra lag/delta/cross-feature features added noise without signal.
+3. **MAE worse than persistence**: Autoformer + stride=2 (4.54 MW) is WORSE than persistence baseline (3.88 MW). The model is actively harmful.
+4. **DirAcc stuck at 53%**: Direction label `future[-1] > future[0]` is inherently noisy at 5-second resolution. This is a data labeling issue, not a model issue.
+5. **Model capacity**: d_model=128, n_layers=3 (848K params) may be insufficient for complex power patterns.
 
 ## Key Lessons
 
-1. **Early stopping bugs are subtle**: Always use `if/elif/else` chains, not separate `if` blocks, for mutually exclusive conditions.
-2. **Pickle config is dangerous**: Loading a pickled config silently overwrites runtime changes. Always re-apply overrides after loading.
-3. **FFT + AMP = careful**: cuFFT requires power-of-2 dimensions in FP16. Cast to FP32 for FFT operations.
-4. **Stride > 2 destroys temporal patterns**: For 5-second interval data, stride=2 is the maximum before losing critical dynamics.
-5. **Memory > compute on Colab**: The bottleneck is usually RAM, not GPU. Design data pipelines to fit in 12GB.
+1. **Stride=1 is mandatory for 5-second data**: stride=2 loses half the temporal information. For power forecasting with micro-bursts, every timestep matters.
+2. **Feature selection > feature quantity**: 34 curated features beat 51 engineered features. More ≠ better.
+3. **Early stopping bugs are subtle**: Always use `if/elif/else` chains, not separate `if` blocks, for mutually exclusive conditions.
+4. **Pickle config is dangerous**: Loading a pickled config silently overwrites runtime changes. Always re-apply overrides after loading.
+5. **FFT + AMP = careful**: cuFFT requires power-of-2 dimensions in FP16. Cast to FP32 for FFT operations.
+6. **Memory > compute on Colab**: The bottleneck is usually RAM, not GPU. Design data pipelines to fit in 12GB.
+7. **Direction accuracy is a red herring**: At 5-second resolution, direction labels are inherently noisy. Focus on MAE, not DirAcc.

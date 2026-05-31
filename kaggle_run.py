@@ -34,10 +34,10 @@ warnings.filterwarnings("ignore")
 # ═══════════════════════════════════════════════════════════════════════════════
 
 DATA_SOURCE = "synthetic"        # "synthetic" | "real"
-DAYS = 60
+DAYS = 30
 
 # Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
-MODEL_TYPE = "autoformer"
+MODEL_TYPE = "transformer"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4

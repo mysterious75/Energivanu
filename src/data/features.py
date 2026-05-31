@@ -1,6 +1,6 @@
 """
-ENERGIVANU — Feature Engineering v2
-v2: Lag features, cyclical time, more rolling windows, cross-feature stats.
+ENERGIVANU — Feature Engineering v3 (reverted to proven 34-feature config)
+stride=1, 34 features: MAE 3.52 MW baseline.
 """
 
 import numpy as np
@@ -29,65 +29,19 @@ class FeatureStore:
             df[f"ps_{wn}"] = df["gpu_power_mw"].rolling(w,min_periods=1).std().fillna(0)
             df[f"sw_{wn}"] = (df["gpu_power_mw"].rolling(w,min_periods=1).max()
                               - df["gpu_power_mw"].rolling(w,min_periods=1).min())
-
-        # Acceleration (second derivative)
         df["accel"] = df["pwr_rate"].diff().fillna(0)/5
-
-        # Grid stress
         df["g_stress"] = np.abs(df["freq_hz"]-60)
-
-        # Solar availability
         df["sol_avail"] = df["solar_mw"]/(df["solar_mw"].rolling(72,min_periods=1).max()+1e-6)
-
-        # Battery headroom
         df["batt_head"] = df["soc_pct"]/100*self.cfg.battery.capacity_mwh
-
-        # Cross-feature rolling stats
-        df["solar_rm_3m"] = df["solar_mw"].rolling(36,min_periods=1).mean()
-        df["solar_rm_6m"] = df["solar_mw"].rolling(72,min_periods=1).mean()
-        df["grid_rm_3m"] = df["grid_mw"].rolling(36,min_periods=1).mean()
-        df["grid_rm_6m"] = df["grid_mw"].rolling(72,min_periods=1).mean()
-        df["batt_rm_3m"] = df["batt_mw"].rolling(36,min_periods=1).mean()
-
-        # Lag features (t-1, t-2, t-3 for key columns)
-        for lag in [1, 2, 3]:
-            df[f"pwr_lag{lag}"] = df["gpu_power_mw"].shift(lag).bfill()
-            df[f"solar_lag{lag}"] = df["solar_mw"].shift(lag).bfill()
-            df[f"grid_lag{lag}"] = df["grid_mw"].shift(lag).bfill()
-
-        # Delta features (rate of change for non-power columns)
-        df["solar_delta"] = df["solar_mw"].diff().fillna(0)/5
-        df["grid_delta"] = df["grid_mw"].diff().fillna(0)/5
-        df["batt_delta"] = df["batt_mw"].diff().fillna(0)/5
-        df["temp_delta"] = df["temp_c"].diff().fillna(0)/5
-
-        # Cyclical time encoding
-        df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
-        df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
-        df["dow_sin"] = np.sin(2 * np.pi * df["dow"] / 7)
-        df["dow_cos"] = np.cos(2 * np.pi * df["dow"] / 7)
-
-        # Interaction features
-        df["pwr_x_solar"] = df["gpu_power_mw"] * df["solar_mw"]
-        df["pwr_x_stress"] = df["gpu_power_mw"] * df["g_stress"]
-
         return df
 
-    def prepare(self, df, fit=True, stride=2):
+    def prepare(self, df, fit=True, stride=1):
         df = self._add_rolling(df.copy())
-
-        rolling_cols = [c for c in df.columns if any(c.startswith(p) for p in
-                        ["pm_","ps_","sw_"])]
-        lag_cols = [c for c in df.columns if c.startswith("pwr_lag1")
-                    or c.startswith("solar_lag1") or c.startswith("grid_lag1")]
-        xcol_cols = [c for c in df.columns if c.startswith("solar_rm")
-                     or c.startswith("grid_rm") or c.startswith("batt_rm")]
-        other_cols = ["accel","g_stress","sol_avail","batt_head",
-                      "solar_delta","grid_delta","batt_delta","temp_delta",
-                      "hour_sin","hour_cos","dow_sin","dow_cos",
-                      "pwr_x_solar"]
-
-        self.cols = BASE_COLS + rolling_cols + lag_cols + xcol_cols + other_cols
+        self.cols = BASE_COLS + [c for c in df.columns
+                                 if c.startswith("pm_") or c.startswith("ps_")
+                                 or c.startswith("sw_") or c.startswith("accel")
+                                 or c.startswith("g_") or c.startswith("sol_")
+                                 or c.startswith("batt_h")]
         self.cols = list(dict.fromkeys(self.cols))
 
         F = np.nan_to_num(df[self.cols].values.astype(np.float32))

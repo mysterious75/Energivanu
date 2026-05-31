@@ -133,7 +133,7 @@ energivanu/
 │   ├── 02_EXPERIMENTS_LOG.md
 │   ├── 03_LESSONS_LEARNED.md
 │   └── 04_CURRENT_STATE.md
-├── MISTAKES.md               # 30+ documented bugs and fixes
+├── CONTRIBUTING.md           # Contribution guidelines (optional)
 └── tests/                    # Test suite
 ```
 

@@ -190,6 +190,7 @@ BATCH_SIZE = 256             # Batch size (reduce if OOM)
 6. **Uncertainty weighting is fragile**: Kendall uncertainty weighting can destabilize training when loss scales differ. `log_var` clamp [-5, 5] insufficient — W[1] reached 29.56. Fixed weights are safer.
 
 7. **Direction accuracy is a red herring**: Both models stuck at 53-57% on synthetic data with 5-second labels. This is a data labeling issue, not a model issue.
+8. **Verify config params are consumed**: `dir_w=5.0` existed in config for the entire project but was never passed to the loss function. Direction loss dominated gradient (0.68 vs 0.25 for power). Grep downstream to confirm.
 
 ---
 

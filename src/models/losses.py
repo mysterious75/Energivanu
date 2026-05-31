@@ -30,6 +30,11 @@ class UncertaintyWeightedLoss(nn.Module):
         self.log_var_direction = nn.Parameter(torch.zeros(1))
 
     def forward(self, power_loss, signal_loss, direction_loss):
+        # Clamp log_var to prevent weight explosion
+        self.log_var_power.data = torch.clamp(self.log_var_power.data, -5.0, 5.0)
+        self.log_var_signal.data = torch.clamp(self.log_var_signal.data, -5.0, 5.0)
+        self.log_var_direction.data = torch.clamp(self.log_var_direction.data, -5.0, 5.0)
+
         # Precision (inverse variance)
         prec_power = torch.exp(-self.log_var_power)
         prec_signal = torch.exp(-self.log_var_signal)

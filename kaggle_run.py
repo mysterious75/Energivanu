@@ -37,7 +37,7 @@ DATA_SOURCE = "synthetic"        # "synthetic" | "real"
 DAYS = 30
 
 # Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
-MODEL_TYPE = "transformer"
+MODEL_TYPE = "autoformer"
 D_MODEL = 128
 N_LAYERS = 3
 N_HEADS = 4

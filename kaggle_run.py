@@ -38,19 +38,19 @@ DAYS = 30
 
 # Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
 MODEL_TYPE = "autoformer"
-D_MODEL = 128
-N_LAYERS = 3
-N_HEADS = 4
-D_FF = 512
+D_MODEL = 256
+N_LAYERS = 6
+N_HEADS = 8
+D_FF = 1024
 LOOKBACK = 60
 HORIZON = 60
 DROPOUT = 0.35
 
 # Training
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 EPOCHS = 120
 PATIENCE = 0
-LR = 1e-4
+LR = 5e-5
 WARMUP = 500
 WEIGHT_DECAY = 3e-4
 GRAD_CLIP = 1.0

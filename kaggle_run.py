@@ -239,6 +239,11 @@ else:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 print("\n[2/3] Building model...")
+
+# Shuffle windows to prevent distribution shift from sequential train/val split
+perm = np.random.RandomState(42).permutation(len(X))
+X, Y, S, D = X[perm], Y[perm], S[perm], D[perm]
+
 split = int(0.8 * len(X))
 y_mean = float(Y[:split].mean())
 y_std = float(Y[:split].std()) + 1e-8

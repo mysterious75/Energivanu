@@ -13,7 +13,7 @@ from src.models.losses import SpikeLoss
 
 class Trainer:
     def __init__(self, model, cfg: Config, y_mean=0.0, y_std=1.0,
-                 use_dp=True, num_workers=4, use_amp=True, grad_accum=1):
+                 use_dp=True, num_workers=4, use_amp=True, grad_accum=1, use_uncertainty=True):
         self.dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = model.to(self.dev)
         self.model_raw = model
@@ -33,7 +33,7 @@ class Trainer:
         # Loss with uncertainty weighting
         self.loss_fn = SpikeLoss(
             uw=cfg.train.under_w, ow=cfg.train.over_w,
-            ss=cfg.train.spike_std, use_uncertainty=True, dir_smoothing=0.1
+            ss=cfg.train.spike_std, use_uncertainty=use_uncertainty, dir_smoothing=0.1
         )
 
         # Move loss parameters to device (for uncertainty weighting)

@@ -59,7 +59,7 @@ GRAD_CLIP = 1.0
 UNDER_W = 5.0
 OVER_W = 1.0
 SPIKE_STD = 1.5
-USE_UNCERTAINTY = True           # Kendall et al. uncertainty weighting
+USE_UNCERTAINTY = False           # Fixed weights for stability
 DIR_SMOOTHING = 0.1              # Label smoothing for direction
 
 # Optimization
@@ -258,7 +258,8 @@ with open(f"{CKPT_DIR}/.model_type", "w") as f:
 
 trainer = Trainer(
     model, cfg, y_mean=y_mean, y_std=y_std,
-    use_dp=USE_DP, num_workers=2, use_amp=USE_AMP
+    use_dp=USE_DP, num_workers=2, use_amp=USE_AMP,
+    use_uncertainty=USE_UNCERTAINTY
 )
 
 if resume_ep > 0:

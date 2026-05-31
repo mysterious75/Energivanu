@@ -33,7 +33,8 @@ class Trainer:
         # Loss with uncertainty weighting
         self.loss_fn = SpikeLoss(
             uw=cfg.train.under_w, ow=cfg.train.over_w,
-            ss=cfg.train.spike_std, use_uncertainty=use_uncertainty, dir_smoothing=0.1
+            ss=cfg.train.spike_std, use_uncertainty=use_uncertainty, dir_smoothing=0.1,
+            dir_weight=cfg.train.dir_w
         )
 
         # Move loss parameters to device (for uncertainty weighting)

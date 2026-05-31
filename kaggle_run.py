@@ -38,27 +38,28 @@ DAYS = 30
 
 # Model: "transformer" | "dlinear" | "tsmixer" | "nlinear" | "autoformer"
 MODEL_TYPE = "transformer"
-D_MODEL = 128
-N_LAYERS = 3
-N_HEADS = 4
-D_FF = 512
+D_MODEL = 256
+N_LAYERS = 6
+N_HEADS = 8
+D_FF = 1024
 LOOKBACK = 60
 HORIZON = 60
 DROPOUT = 0.35
 
 # Training
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 EPOCHS = 120
 PATIENCE = 0
-LR = 1e-4
+LR = 5e-5
 WARMUP = 500
 WEIGHT_DECAY = 3e-4
 GRAD_CLIP = 1.0
 
-# Loss (uncertainty weighting handles balance automatically)
+# Loss
 UNDER_W = 5.0
 OVER_W = 1.0
 SPIKE_STD = 1.5
+DIR_WEIGHT = 0.2               # Direction loss downweight (avoids gradient domination by random head)
 USE_UNCERTAINTY = False           # Fixed weights for stability
 DIR_SMOOTHING = 0.1              # Label smoothing for direction
 
@@ -158,6 +159,7 @@ cfg.train.grad_clip = GRAD_CLIP
 cfg.train.under_w = UNDER_W
 cfg.train.over_w = OVER_W
 cfg.train.spike_std = SPIKE_STD
+cfg.train.dir_w = DIR_WEIGHT
 cfg.cluster.num_gpus = 150_000
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -182,10 +184,15 @@ else:
     print("\n[1/3] Loading saved data...")
     cfg = pickle.load(open(f"{DATA_DIR}/cfg.pkl", "rb"))
     cfg.model.model_type = MODEL_TYPE
+    cfg.model.d_model = D_MODEL
+    cfg.model.n_layers = N_LAYERS
+    cfg.model.n_heads = N_HEADS
+    cfg.model.d_ff = D_FF
+    cfg.model.dropout = DROPOUT
     cfg.train.epochs = EPOCHS
     cfg.train.lr = LR
     cfg.train.batch_size = BATCH_SIZE
-    cfg.model.dropout = DROPOUT
+    cfg.train.dir_w = DIR_WEIGHT
     X = np.load(f"{DATA_DIR}/X.npy")
     Y = np.load(f"{DATA_DIR}/Y.npy")
     S = np.load(f"{DATA_DIR}/S.npy")

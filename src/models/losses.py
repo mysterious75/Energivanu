@@ -69,13 +69,14 @@ class SpikeLoss(nn.Module):
     4. Label smoothing for direction classification
     """
     def __init__(self, uw=5.0, ow=1.0, ss=1.5,
-                 use_uncertainty=True, dir_smoothing=0.1):
+                 use_uncertainty=True, dir_smoothing=0.1, dir_weight=1.0):
         super().__init__()
         self.uw = uw  # under-predict weight
         self.ow = ow  # over-predict weight
         self.ss = ss  # spike threshold (std multiplier)
         self.use_uncertainty = use_uncertainty
         self.dir_smoothing = dir_smoothing
+        self.dir_weight = dir_weight  # direction loss weight
 
         if use_uncertainty:
             self.uncertainty = UncertaintyWeightedLoss()
@@ -117,8 +118,7 @@ class SpikeLoss(nn.Module):
         if self.use_uncertainty:
             total = self.uncertainty(pl, sl, dl)
         else:
-            # Fallback: manual weighting (original behavior)
-            total = pl + sl + dl
+            total = pl + sl + self.dir_weight * dl
 
         # === METRICS (no gradient) ===
         with torch.no_grad():

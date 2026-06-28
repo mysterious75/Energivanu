@@ -25,3 +25,5 @@ data/collections/
 *.db
 .openclaw/tmp/
 kaggle.json
+data/kaggle/
+kaggle/push_notebook/

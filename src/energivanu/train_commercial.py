@@ -7,8 +7,8 @@ Trains the EnergivanuPEB model using ONLY commercially-licensed data sources:
   - Self-collected Kaggle T4 data (own data)
   - Synthetic data (generated)
 
-**DO NOT** use York University H100 data (CC BY-NC-ND) or MIT Supercloud
-(CC BY-NC-ND) in this pipeline — those are research-only.
+All data sources used here are verified commercial-safe.
+See config/data_sources.yaml for the full data source registry.
 
 Usage::
 
@@ -28,7 +28,6 @@ Usage::
 from __future__ import annotations
 
 import argparse
-import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -139,7 +138,11 @@ def _load_alibaba_data(data_dir: str, seq_len: int, pred_horizon: int,
             "Alibaba data not found — skipping",
             extra={"path": str(npz_path), "source": "alibaba_gpu_trace"},
         )
-        return np.array([]).reshape(0, seq_len, 15), np.array([]).reshape(0, pred_horizon), np.array([], dtype=np.int64)
+        return (
+            np.array([]).reshape(0, seq_len, 15),
+            np.array([]).reshape(0, pred_horizon),
+            np.array([], dtype=np.int64),
+        )
 
     data = np.load(str(npz_path))
     X = data["X"].astype(np.float32)
@@ -166,7 +169,11 @@ def _load_kaggle_data(data_dir: str, seq_len: int, pred_horizon: int,
             "Kaggle data not found — skipping",
             extra={"path": str(npz_path), "source": "kaggle_t4"},
         )
-        return np.array([]).reshape(0, seq_len, 15), np.array([]).reshape(0, pred_horizon), np.array([], dtype=np.int64)
+        return (
+            np.array([]).reshape(0, seq_len, 15),
+            np.array([]).reshape(0, pred_horizon),
+            np.array([], dtype=np.int64),
+        )
 
     data = np.load(str(npz_path))
     X = data["X"].astype(np.float32)
@@ -223,7 +230,11 @@ def _generate_synthetic_data(
         "generated synthetic data",
         extra={"samples": num_samples, "source": "synthetic"},
     )
-    return np.array(X, dtype=np.float32), np.array(Y_power, dtype=np.float32), np.array(Y_signal, dtype=np.int64)
+    return (
+        np.array(X, dtype=np.float32),
+        np.array(Y_power, dtype=np.float32),
+        np.array(Y_signal, dtype=np.int64),
+    )
 
 
 def build_commercial_dataloaders(

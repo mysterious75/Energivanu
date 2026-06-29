@@ -2,7 +2,7 @@
 """Energivanu REST API — power prediction and battery optimization."""
 
 import logging
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
@@ -71,7 +71,8 @@ def startup_event():
     # Try to load model checkpoint
     checkpoint_path = os.getenv(
         "ENERGIVANU_MODEL_PATH",
-        str(Path(__file__).resolve().parent.parent.parent / "models" / "checkpoints" / "best_model_demo.pt")
+        str(Path(__file__).resolve().parent.parent.parent
+            / "models" / "checkpoints" / "best_model_demo.pt")
     )
     try:
         if os.path.exists(checkpoint_path):

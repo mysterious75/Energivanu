@@ -10,9 +10,9 @@ Components:
 - :mod:`codecarbon_tracker` — CodeCarbon energy tracking integration
 """
 
-from .nvidia_smi_collector import NvidiaSmiCollector
-from .data_collector import DataCollector, CollectionMode
+from .data_collector import CollectionMode, DataCollector
 from .format_adapter import FormatAdapter
+from .nvidia_smi_collector import NvidiaSmiCollector
 
 __all__ = [
     "NvidiaSmiCollector",

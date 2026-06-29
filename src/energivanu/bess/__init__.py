@@ -10,8 +10,8 @@ Components:
 - :mod:`modbus_server` — Modbus mock server for BESS hardware interface
 """
 
-from .pybamm_battery import PyBaMMBattery, BatteryState
 from .modbus_server import BESSModbusServer, ModbusRegisterMap
+from .pybamm_battery import BatteryState, PyBaMMBattery
 
 __all__ = [
     "PyBaMMBattery",

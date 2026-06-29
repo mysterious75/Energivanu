@@ -10,8 +10,8 @@ Components:
 - :mod:`ercot_sced` — ERCOT SCED signal parser
 """
 
-from .openadr_ven import OpenADRVEN, GridEvent, GridSignalLevel
 from .ercot_sced import ERCOTSCEDClient, SCEDSignal
+from .openadr_ven import GridEvent, GridSignalLevel, OpenADRVEN
 
 __all__ = [
     "OpenADRVEN",

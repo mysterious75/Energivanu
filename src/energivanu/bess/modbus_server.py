@@ -29,12 +29,9 @@ from __future__ import annotations
 
 import json
 import threading
-import time
-from dataclasses import dataclass, field
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from typing import Any, Dict, List, Optional
-
-import numpy as np
+from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any, Dict, Optional
 
 from ..logging_config import get_logger
 
@@ -46,12 +43,12 @@ logger = get_logger("bess")
 
 _PYMODBUS_AVAILABLE = False
 try:
-    from pymodbus.server import StartTcpServer
     from pymodbus.datastore import (
         ModbusSequentialDataBlock,
-        ModbusSlaveContext,
         ModbusServerContext,
+        ModbusSlaveContext,
     )
+    from pymodbus.server import StartTcpServer
     _PYMODBUS_AVAILABLE = True
     logger.info("pymodbus available — using Modbus TCP server")
 except ImportError:
@@ -206,7 +203,10 @@ class BESSModbusServer:
     def set_power(self, power_mw: float) -> None:
         """Set current power output in MW. Positive = discharge."""
         self.state.power_kw = power_mw * 1000
-        self.state.current_a = power_mw * 1e6 / self.state.voltage_v if self.state.voltage_v > 0 else 0
+        self.state.current_a = (
+            power_mw * 1e6 / self.state.voltage_v
+            if self.state.voltage_v > 0 else 0
+        )
         if power_mw > 0:
             self.state.status = (self.state.status & ~0x0006) | 0x0004  # Discharging
         elif power_mw < 0:

@@ -26,7 +26,6 @@ import functools
 import json
 import logging
 import logging.handlers
-import os
 import sys
 import time
 from contextlib import contextmanager

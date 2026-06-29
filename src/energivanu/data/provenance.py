@@ -49,7 +49,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from energivanu.config import get_config
 from energivanu.logging_config import get_logger, timed
 
 logger: logging.Logger = get_logger("data.provenance")
@@ -372,7 +371,10 @@ def list_datasets(
             raw = json.loads(sidecar.read_text(encoding="utf-8"))
             record = ProvenanceRecord(**raw)
         except (json.JSONDecodeError, TypeError, KeyError) as exc:
-            logger.warning("skipping corrupt sidecar", extra={"path": str(sidecar), "error": str(exc)})
+            logger.warning(
+                "skipping corrupt sidecar",
+                extra={"path": str(sidecar), "error": str(exc)},
+            )
             continue
 
         # Apply filters

@@ -33,9 +33,8 @@ estimation based on nvidia-smi power readings.
 from __future__ import annotations
 
 import csv
-import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -213,8 +212,14 @@ class EnergivanuCarbonTracker:
         if _CODECARBON_AVAILABLE and self._cc_tracker is not None:
             # CodeCarbon tracks cumulatively; compute delta
             emissions_data = self._cc_tracker._prepare_emissions_data()
-            energy_kwh = float(emissions_data.energy.kWh) if hasattr(emissions_data, 'energy') else 0.0
-            emissions_kg = float(emissions_data.emissions) if hasattr(emissions_data, 'emissions') else 0.0
+            energy_kwh = (
+                float(emissions_data.energy.kWh)
+                if hasattr(emissions_data, 'energy') else 0.0
+            )
+            emissions_kg = (
+                float(emissions_data.emissions)
+                if hasattr(emissions_data, 'emissions') else 0.0
+            )
             # Use a rough GPU power estimate for cost
             gpu_power_w = self._estimate_gpu_power()
             cost_usd = energy_kwh * self.electricity_rate

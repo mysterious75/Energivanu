@@ -16,9 +16,12 @@ Components:
 def __getattr__(name):
     if name in ("RealH100Dataset", "build_dataloaders", "create_sequences",
                 "load_node_data", "scale_to_facility"):
-        from .h100_processor import (
-            RealH100Dataset, build_dataloaders, create_sequences,
-            load_node_data, scale_to_facility,
+        from .h100_processor import (  # noqa: F401
+            RealH100Dataset,  # noqa: F401
+            build_dataloaders,  # noqa: F401
+            create_sequences,  # noqa: F401
+            load_node_data,  # noqa: F401
+            scale_to_facility,  # noqa: F401
         )
         return locals()[name]
     elif name == "AlibabaTraceProcessor":

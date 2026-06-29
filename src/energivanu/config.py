@@ -26,10 +26,9 @@ import os
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import yaml
-
 
 # ---------------------------------------------------------------------------
 # Dataclass hierarchy — typed, validated, immutable after creation

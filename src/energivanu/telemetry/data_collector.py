@@ -48,7 +48,7 @@ import json
 import signal
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -169,7 +169,10 @@ class DataCollector:
         # Load config for defaults
         try:
             cfg = get_config()
-            self._sim_mode = simulation_mode if simulation_mode is not None else cfg.telemetry.simulation_mode
+            self._sim_mode = (
+                simulation_mode if simulation_mode is not None
+                else cfg.telemetry.simulation_mode
+            )
             self._num_gpus = cfg.telemetry.simulation_num_gpus
             self._storage_backend = cfg.telemetry.storage_backend
         except Exception:
@@ -204,7 +207,10 @@ class DataCollector:
         run_dir.mkdir(parents=True, exist_ok=True)
 
         csv_path = str(run_dir / "telemetry.csv")
-        db_path = str(run_dir / "telemetry.db") if self._storage_backend in ("sqlite", "both") else None
+        db_path = (
+            str(run_dir / "telemetry.db")
+            if self._storage_backend in ("sqlite", "both") else None
+        )
         summary_path = str(run_dir / "summary.json")
 
         logger.info(
@@ -469,7 +475,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     try:
         result = collector.run()
-        print(f"\n✅ Collection complete!")
+        print("\n✅ Collection complete!")
         print(f"   Mode:     {result.mode}")
         print(f"   Duration: {result.duration_actual_hours:.2f} h")
         print(f"   Samples:  {result.total_samples}")

@@ -32,8 +32,8 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -246,7 +246,7 @@ class PyBaMMBattery:
 
         # Current calculation
         capacity_ah = self.config.capacity_mwh * 1e6 / self.config.nominal_voltage_v
-        nominal_current = capacity_ah  # 1C rate
+        capacity_ah  # 1C rate (kept for reference)
 
         # Internal resistance (increases with temperature deviation and SOC)
         temp_factor = 1.0 + p["r_temp_coeff"] * abs(self._temperature_c - 25.0)
@@ -277,10 +277,10 @@ class PyBaMMBattery:
 
             if power_mw > 0:  # Discharge
                 current_a = (total_ocv - math.sqrt(max(0, discriminant))) / (2 * total_r)
-                efficiency = self.config.efficiency_discharge
+                _eff = self.config.efficiency_discharge
             else:  # Charge
                 current_a = -(total_ocv - math.sqrt(max(0, discriminant))) / (2 * total_r)
-                efficiency = self.config.efficiency_charge
+                __eff = self.config.efficiency_charge
 
             voltage_v = total_ocv - current_a * total_r
             actual_power_mw = voltage_v * current_a / 1e6
@@ -297,7 +297,10 @@ class PyBaMMBattery:
         self._soc = max(self.config.soc_min, min(self.config.soc_max, self._soc))
 
         # Temperature model (simplified thermal)
-        heat_w = abs(power_mw) * 1e6 * p["heat_coeff"] + (current_a**2 * r_internal * self.config.num_cells)
+        heat_w = (
+            abs(power_mw) * 1e6 * p["heat_coeff"]
+            + (current_a**2 * r_internal * self.config.num_cells)
+        )
         temp_change = heat_w * dt_seconds / p["thermal_mass"]
         cooling = 0.01 * (self._temperature_c - 25.0) * dt_seconds  # Simple Newton cooling
         self._temperature_c += temp_change - cooling
@@ -327,7 +330,7 @@ class PyBaMMBattery:
             self._pybamm_model = pybamm.lithium_ion.SPM()
 
         # Convert power to current
-        capacity_ah = self.config.capacity_mwh * 1e6 / self.config.nominal_voltage_v
+        _capacity_ah = self.config.capacity_mwh * 1e6 / self.config.nominal_voltage_v
         if abs(power_mw) < 0.001:
             current_a = 0.0
         else:
@@ -409,7 +412,9 @@ class PyBaMMBattery:
             "max_power_mw": round(max(np.abs(powers)), 4),
             "current_temp_c": round(self._temperature_c, 1),
             "max_temp_c": round(max(temps), 1),
-            "cycle_count": round(self._total_energy_throughput_mwh / (2 * self.config.capacity_mwh), 2),
+            "cycle_count": round(
+                self._total_energy_throughput_mwh / (2 * self.config.capacity_mwh), 2
+            ),
             "capacity_fade_pct": round(self._capacity_fade_pct, 4),
             "total_energy_throughput_mwh": round(self._total_energy_throughput_mwh, 2),
             "chemistry": self.config.chemistry,

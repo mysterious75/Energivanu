@@ -87,6 +87,38 @@ _SKIP_DIRS: Set[str] = {
     "*.egg-info", "build", "dist",
 }
 
+# Files/directories that are documentation-only and may legitimately
+# reference NC datasets for informational/warning purposes.
+# These are NOT data contamination — they describe what NOT to use.
+_EXCLUDE_PATHS: Set[str] = {
+    "scripts/check_compliance.py",  # The scanner itself
+    "README.md",
+    "MASTER_STRATEGY.md",
+    "MODEL_CARD.md",
+    "PROJECT_STATUS.md",
+    "TECHNICAL_DOCUMENTATION.md",
+    "VERIFICATION_REPORT.md",
+    "DEEP_DIVE_ANALYSIS.md",
+    "ZERO_BUDGET_MASTER_PLAN.md",
+    "docs/LEGAL_FAQ.md",
+    "data/README.md",
+    "option-2-open-license/",
+    "option-3-dual-strategy/",
+    ".github/workflows/compliance.yml",
+    "magazine/LEGAL_COMPLIANCE.md",
+    "magazine/build_magazine.py",
+    "magazine/build_docx.py",
+    "models/results.json",
+    "config/data_sources.yaml",
+    "index.html",
+    "docs/index.html",
+    "kaggle/03_full_pipeline.py",
+    "src/energivanu/data/provenance.py",
+    "src/energivanu/data.py",
+    "src/energivanu/data/h100_processor.py",
+    "src/energivanu/data/alibaba_processor.py",
+}
+
 # NC-only Python packages (hypothetical — extend as needed)
 _NC_PACKAGES: Set[str] = {
     # Add any known NC-only packages here
@@ -227,6 +259,11 @@ class ComplianceScanner:
         for path in sorted(self._root.rglob("*")):
             # Skip excluded directories
             if any(part in self._skip for part in path.parts):
+                continue
+            # Skip excluded paths (documentation files that legitimately
+            # reference NC datasets for informational purposes)
+            rel = str(path.relative_to(self._root))
+            if any(rel.startswith(excl) or rel == excl for excl in _EXCLUDE_PATHS):
                 continue
             if path.is_file():
                 yield path

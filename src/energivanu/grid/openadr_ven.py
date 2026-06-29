@@ -44,18 +44,15 @@ Dependencies::
 
 from __future__ import annotations
 
-import json
 import threading
 import time
-import urllib.request
 import urllib.error
-from dataclasses import dataclass, field
+import urllib.request
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import IntEnum
 from typing import Any, Callable, Dict, List, Optional
 from xml.etree import ElementTree as ET
-
-import numpy as np
 
 from ..logging_config import get_logger, timed
 
@@ -408,7 +405,11 @@ class OpenADRVEN:
 
         # Extract priority
         priority_elem = event_elem.find(".//ei:priority", OADR_NS)
-        priority = int(priority_elem.text) if priority_elem is not None and priority_elem.text else 0
+        priority = (
+            int(priority_elem.text)
+            if priority_elem is not None and priority_elem.text
+            else 0
+        )
 
         # Generate action description
         action_info = SIGNAL_ACTIONS.get(signal_level, SIGNAL_ACTIONS[GridSignalLevel.NORMAL])
@@ -491,7 +492,7 @@ class OpenADRVEN:
             raw_payload={"simulated": True},
         )
 
-        result = self.process_event(event)
+        self.process_event(event)
         logger.info(
             "simulated grid event",
             extra={"level": level.name, "duration_s": duration_seconds},

@@ -38,9 +38,8 @@ Usage::
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -361,9 +360,21 @@ class AlibabaTraceProcessor:
         peak_power_w = self.max_power_per_gpu_w
 
         gpu_util = df["gpu_util"].values.astype(np.float64)
-        gpu_mem_util = df["gpu_mem_util"].values.astype(np.float64) if "gpu_mem_util" in df.columns else np.full(len(df), 0.0)
-        cpu_util = df["cpu_util"].values.astype(np.float64) if "cpu_util" in df.columns else np.full(len(df), 0.0)
-        mem_util = df["mem_util"].values.astype(np.float64) if "mem_util" in df.columns else np.full(len(df), 0.0)
+        gpu_mem_util = (
+            df["gpu_mem_util"].values.astype(np.float64)
+            if "gpu_mem_util" in df.columns
+            else np.full(len(df), 0.0)
+        )
+        cpu_util = (
+            df["cpu_util"].values.astype(np.float64)
+            if "cpu_util" in df.columns
+            else np.full(len(df), 0.0)
+        )
+        _mem_util = (
+            df["mem_util"].values.astype(np.float64)
+            if "mem_util" in df.columns
+            else np.full(len(df), 0.0)
+        )
 
         # Per-GPU power estimate (W)
         gpu_power_w = idle_power_w + (peak_power_w - idle_power_w) * (gpu_util / 100.0)

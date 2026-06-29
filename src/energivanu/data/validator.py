@@ -34,12 +34,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-from energivanu.config import get_config
 from energivanu.logging_config import get_logger, timed
 
 logger: logging.Logger = get_logger("data.validator")

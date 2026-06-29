@@ -70,7 +70,7 @@ class MagazinePDF(FPDF):
 
     def section_title(self, title, subtitle=''):
         self.set_font('helvetica', 'B', 26)
-        self.set_text_color(*WHITE)
+        self.set_text_color(*BLACK)
         self.set_xy(20, 20)
         self.multi_cell(170, 10, title, align='L')
         if subtitle:
@@ -87,7 +87,7 @@ class MagazinePDF(FPDF):
     def heading2(self, text, y=None):
         if y: self.set_y(y)
         self.set_font('helvetica', 'B', 15)
-        self.set_text_color(*WHITE)
+        self.set_text_color(*BLACK)
         self.set_x(20)
         self.cell(170, 8, text, ln=True)
         return self.get_y() + 2
@@ -192,7 +192,7 @@ class MagazinePDF(FPDF):
         for i, row in enumerate(rows):
             if i == highlight_row:
                 self.set_fill_color(244, 230, 218)
-                self.set_text_color(*WHITE)
+                self.set_text_color(*BLACK)
                 self.set_font('helvetica', 'B', 8)
             else:
                 self.set_fill_color(255, 255, 255) if i % 2 == 0 else self.set_fill_color(244, 241, 238)
@@ -220,7 +220,7 @@ def build_magazine():
     pdf.set_fill_color(*RED)
     pdf.rect(0, 0, 210, 12, 'F')
     pdf.set_font('helvetica', 'B', 20)
-    pdf.set_text_color(*WHITE)
+    pdf.set_text_color(*BLACK)
     pdf.set_xy(10, 2)
     pdf.cell(120, 8, 'ENERGIVANU INSIGHTS', ln=False)
     pdf.set_font('helvetica', '', 7)
@@ -238,7 +238,7 @@ def build_magazine():
 
     # Main headline
     pdf.set_font('helvetica', 'B', 38)
-    pdf.set_text_color(*WHITE)
+    pdf.set_text_color(*BLACK)
     pdf.set_xy(20, 95)
     pdf.multi_cell(170, 14, 'The Open-Source Engine\nThat Could Save $47B\nin Data Center Power', align='C')
 
@@ -297,7 +297,7 @@ def build_magazine():
         pdf.set_xy(20, y)
         pdf.cell(15, 8, num)
         pdf.set_font('helvetica', 'B', 12)
-        pdf.set_text_color(*WHITE)
+        pdf.set_text_color(*BLACK)
         pdf.set_xy(38, y)
         pdf.cell(130, 8, title)
         pdf.set_font('helvetica', '', 8)
@@ -632,7 +632,7 @@ def build_magazine():
         pdf.set_xy(20, y)
         pdf.cell(25, 6, time)
         pdf.set_font('helvetica', 'B', 11)
-        pdf.set_text_color(*WHITE)
+        pdf.set_text_color(*BLACK)
         pdf.set_xy(48, y)
         pdf.cell(120, 6, title)
         pdf.set_font('helvetica', '', 8.5)
@@ -676,7 +676,7 @@ def build_magazine():
     pdf.cell(18, 12, 'V', align='C')
     # Info
     pdf.set_font('helvetica', 'B', 13)
-    pdf.set_text_color(*WHITE)
+    pdf.set_text_color(*BLACK)
     pdf.set_xy(52, y + 5)
     pdf.cell(100, 7, 'Ved Kumar')
     pdf.set_font('helvetica', 'B', 7)

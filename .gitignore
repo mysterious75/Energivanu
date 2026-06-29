@@ -58,3 +58,6 @@ kaggle_results/validation_output/
 # Ignore local temporary image files
 *.jfif
 ChatGPT Image*.png
+
+# Ignore local Ved guide
+ved-guide.md

@@ -12,17 +12,18 @@ ASSETS = os.path.join(SCRIPT_DIR, 'assets')
 OUTPUT = os.path.join(SCRIPT_DIR, 'Energivanu_Insights_Magazine.pdf')
 
 # Colors
-BLACK = (10, 10, 10)
-DARK_BG = (15, 15, 20)
-RED = (200, 16, 46)
-CYAN = (0, 212, 255)
-GREEN = (0, 255, 136)
-ORANGE = (255, 107, 53)
-WHITE = (255, 255, 255)
-GRAY = (150, 150, 150)
-DARK_GRAY = (80, 80, 80)
-LIGHT_GRAY = (200, 200, 200)
+BLACK = (26, 22, 21)        # Deep dark warm brown
+DARK_BG = (244, 241, 238)   # Light gray-cream background
+RED = (201, 80, 46)         # Burnt orange accent
+CYAN = (21, 108, 194)       # Primary blue
+GREEN = (14, 161, 88)       # Soft green
+ORANGE = (201, 80, 46)      # Burnt orange accent
+WHITE = (255, 255, 255)     # Clean white
+GRAY = (117, 113, 112)      # Neutral gray
+DARK_GRAY = (69, 63, 61)    # Warm dark brown
+LIGHT_GRAY = (228, 226, 226)# Light border gray
 MID_GRAY = (100, 100, 100)
+
 
 
 FONT_DIR = '/usr/lib/node_modules/openclaw/node_modules/pdfjs-dist/standard_fonts'
@@ -54,14 +55,14 @@ class MagazinePDF(FPDF):
         self.set_xy(175, 8)
         self.cell(0, 5, f'{int(page_num):02d}' if page_num else '', ln=False, align='R')
         # Separator line
-        self.set_draw_color(40, 40, 40)
+        self.set_draw_color(*LIGHT_GRAY)
         self.line(20, 14, 190, 14)
 
     def footer_bar(self):
-        self.set_draw_color(40, 40, 40)
+        self.set_draw_color(*LIGHT_GRAY)
         self.line(20, 287, 190, 287)
         self.set_font('helvetica', '', 6)
-        self.set_text_color(50, 50, 50)
+        self.set_text_color(*GRAY)
         self.set_xy(20, 289)
         self.cell(80, 4, 'ENERGIVANU INSIGHTS  -  ENERGY & AI', ln=False)
         self.set_xy(110, 289)
@@ -102,7 +103,7 @@ class MagazinePDF(FPDF):
     def body_text(self, text, y=None, indent=20, width=170):
         if y: self.set_y(y)
         self.set_font('helvetica', '', 9.5)
-        self.set_text_color(200, 200, 200)
+        self.set_text_color(*DARK_GRAY)
         self.set_x(indent)
         self.multi_cell(width, 5.2, text, align='J')
         return self.get_y() + 2
@@ -112,7 +113,7 @@ class MagazinePDF(FPDF):
         # Red left border
         y_start = self.get_y()
         self.set_font('helvetica', '', 11)
-        self.set_text_color(240, 240, 240)
+        self.set_text_color(*BLACK)
         self.set_x(25)
         self.multi_cell(160, 6, text, align='J')
         y_end = self.get_y()
@@ -121,8 +122,8 @@ class MagazinePDF(FPDF):
         return y_end + 4
 
     def metric_card(self, x, y, w, h, value, label, sub=''):
-        self.set_fill_color(20, 20, 30)
-        self.set_draw_color(40, 40, 50)
+        self.set_fill_color(244, 230, 218)
+        self.set_draw_color(*LIGHT_GRAY)
         self.rect(x, y, w, h, 'FD')
         # Value
         self.set_font('helvetica', 'B', 20)
@@ -143,20 +144,20 @@ class MagazinePDF(FPDF):
     def info_box(self, title, text, y=None):
         if y: self.set_y(y)
         y_start = self.get_y()
-        self.set_fill_color(0, 20, 30)
-        self.set_draw_color(0, 60, 80)
+        self.set_fill_color(226, 236, 245)
+        self.set_draw_color(156, 193, 231)
         # Draw box after calculating height
         self.set_font('helvetica', 'B', 9)
         self.set_text_color(*CYAN)
         self.set_x(22)
         self.cell(166, 5, title, ln=True)
         self.set_font('helvetica', '', 8.5)
-        self.set_text_color(180, 180, 180)
+        self.set_text_color(*DARK_GRAY)
         self.set_x(22)
         self.multi_cell(166, 4.5, text, align='J')
         y_end = self.get_y() + 2
-        self.set_fill_color(0, 20, 30)
-        self.set_draw_color(0, 60, 80)
+        self.set_fill_color(226, 236, 245)
+        self.set_draw_color(156, 193, 231)
         self.rect(20, y_start - 2, 170, y_end - y_start + 6, 'D')
         self.set_y(y_end + 2)
         return y_end + 2
@@ -180,7 +181,7 @@ class MagazinePDF(FPDF):
         if y: self.set_y(y)
         col_w = 170 / len(headers)
         # Header
-        self.set_fill_color(25, 25, 45)
+        self.set_fill_color(*LIGHT_GRAY)
         self.set_font('helvetica', 'B', 7.5)
         self.set_text_color(*CYAN)
         self.set_x(20)
@@ -190,12 +191,12 @@ class MagazinePDF(FPDF):
         # Rows
         for i, row in enumerate(rows):
             if i == highlight_row:
-                self.set_fill_color(0, 30, 40)
+                self.set_fill_color(244, 230, 218)
                 self.set_text_color(*WHITE)
                 self.set_font('helvetica', 'B', 8)
             else:
-                self.set_fill_color(15, 15, 20) if i % 2 == 0 else self.set_fill_color(18, 18, 25)
-                self.set_text_color(190, 190, 190)
+                self.set_fill_color(255, 255, 255) if i % 2 == 0 else self.set_fill_color(244, 241, 238)
+                self.set_text_color(*DARK_GRAY)
                 self.set_font('helvetica', '', 8)
             self.set_x(20)
             for cell in row:
@@ -210,9 +211,9 @@ def build_magazine():
     # ==================== PAGE 1: COVER ====================
     pdf.dark_page()
     # Full page gradient background effect
-    pdf.set_fill_color(13, 27, 42)
+    pdf.set_fill_color(226, 236, 245)
     pdf.rect(0, 0, 210, 297, 'F')
-    pdf.set_fill_color(10, 10, 10)
+    pdf.set_fill_color(244, 230, 218)
     pdf.rect(0, 0, 60, 297, 'F')
 
     # Top bar
@@ -223,7 +224,7 @@ def build_magazine():
     pdf.set_xy(10, 2)
     pdf.cell(120, 8, 'ENERGIVANU INSIGHTS', ln=False)
     pdf.set_font('helvetica', '', 7)
-    pdf.set_text_color(220, 220, 220)
+    pdf.set_text_color(*DARK_GRAY)
     pdf.set_xy(130, 2)
     pdf.cell(70, 4, 'SPECIAL EDITION', align='R', ln=False)
     pdf.set_xy(130, 7)
@@ -263,7 +264,7 @@ def build_magazine():
         x_start += stat_w
 
     # Bottom bar
-    pdf.set_fill_color(15, 15, 15)
+    pdf.set_fill_color(244, 241, 238)
     pdf.rect(0, 270, 210, 27, 'F')
     pdf.set_font('helvetica', '', 7)
     pdf.set_text_color(80, 80, 80)
@@ -305,7 +306,7 @@ def build_magazine():
         pdf.multi_cell(150, 4.5, desc)
         y = pdf.get_y() + 5
         # Separator
-        pdf.set_draw_color(30, 30, 30)
+        pdf.set_draw_color(*LIGHT_GRAY)
         pdf.line(20, y, 190, y)
         y += 4
 
@@ -346,10 +347,10 @@ def build_magazine():
 
     # Pullquote
     y_start = pdf.get_y()
-    pdf.set_fill_color(*CYAN)
+    pdf.set_fill_color(*RED)
     pdf.rect(20, y_start, 2, 20, 'F')
     pdf.set_font('helvetica', 'I', 13)
-    pdf.set_text_color(*CYAN)
+    pdf.set_text_color(*RED)
     pdf.set_xy(28, y_start)
     pdf.multi_cell(155, 7, '"The grid doesn\'t need more data centers. It needs smarter data centers."')
     pdf.set_font('helvetica', '', 8)
@@ -556,7 +557,7 @@ def build_magazine():
     pdf.set_xy(20, y_cta + 3)
     pdf.cell(170, 7, 'Ready to Deploy?', align='C')
     pdf.set_font('helvetica', '', 9)
-    pdf.set_text_color(220, 220, 220)
+    pdf.set_text_color(*DARK_GRAY)
     pdf.set_xy(20, y_cta + 11)
     pdf.cell(170, 5, 'pip install energivanu  -  github.com/mysterious75/energivanu2  -  @VEDKUMAR98', align='C')
 
@@ -627,7 +628,7 @@ def build_magazine():
 
     for time, title, desc in roadmap:
         pdf.set_font('helvetica', 'B', 10)
-        pdf.set_text_color(*CYAN)
+        pdf.set_text_color(*RED)
         pdf.set_xy(20, y)
         pdf.cell(25, 6, time)
         pdf.set_font('helvetica', 'B', 11)
@@ -635,11 +636,11 @@ def build_magazine():
         pdf.set_xy(48, y)
         pdf.cell(120, 6, title)
         pdf.set_font('helvetica', '', 8.5)
-        pdf.set_text_color(170, 170, 170)
+        pdf.set_text_color(*DARK_GRAY)
         pdf.set_xy(48, y + 7)
         pdf.multi_cell(140, 4.5, desc)
         y = pdf.get_y() + 5
-        pdf.set_draw_color(30, 30, 30)
+        pdf.set_draw_color(*LIGHT_GRAY)
         pdf.line(20, y, 190, y)
         y += 3
 
@@ -657,14 +658,14 @@ def build_magazine():
     pdf.set_fill_color(*CYAN)
     pdf.rect(20, y_start, 2, 18, 'F')
     pdf.set_font('helvetica', 'I', 12)
-    pdf.set_text_color(*CYAN)
+    pdf.set_text_color(*RED)
     pdf.set_xy(28, y_start)
     pdf.multi_cell(155, 6, '"We\'re not building a product. We\'re building the missing layer between AI and the grid."')
 
     # Founder box
     y = pdf.get_y() + 8
-    pdf.set_fill_color(20, 20, 30)
-    pdf.set_draw_color(50, 50, 60)
+    pdf.set_fill_color(244, 230, 218)
+    pdf.set_draw_color(*LIGHT_GRAY)
     pdf.rect(20, y, 170, 28, 'FD')
     # Avatar circle
     pdf.set_fill_color(0, 212, 255)
@@ -683,7 +684,7 @@ def build_magazine():
     pdf.set_xy(52, y + 12)
     pdf.cell(100, 5, 'CREATOR & LEAD DEVELOPER')
     pdf.set_font('helvetica', '', 8)
-    pdf.set_text_color(150, 150, 150)
+    pdf.set_text_color(*DARK_GRAY)
     pdf.set_xy(52, y + 18)
     pdf.multi_cell(130, 4, 'Built from scratch on Kaggle free tier. Open-source advocate. Available for consulting, partnerships, and pilot deployments.')
 
@@ -696,7 +697,7 @@ def build_magazine():
     pdf.set_xy(20, y + 2)
     pdf.cell(170, 6, 'Join the Revolution', align='C')
     pdf.set_font('helvetica', '', 8)
-    pdf.set_text_color(220, 220, 220)
+    pdf.set_text_color(*DARK_GRAY)
     pdf.set_xy(20, y + 9)
     pdf.cell(170, 5, 'github.com/mysterious75/energivanu2  -  @VEDKUMAR98  -  Open Source  -  AGPL-3.0', align='C')
 

@@ -35,3 +35,13 @@ alibaba/*.csv
 *.zip
 results*.zip
 mimoclaw_workspace.tar.gz
+
+# Temporary scratch/patch scripts
+fix_*.py
+convert_to_dreelio.py
+
+# Telemetry and validation runs
+validation_output/
+kaggle_results/validation_output/
+.openclaw/
+*.csv

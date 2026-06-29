@@ -277,7 +277,7 @@ def build_magazine():
 
     # ==================== PAGE 2: TABLE OF CONTENTS ====================
     pdf.dark_page()
-    pdf.top_bar('Energivanu', 2)
+    pdf.top_bar('Energivanu', 1)
 
     y = pdf.section_title('Inside This Issue', 'A deep dive into the technology, the market, and the mission.')
     y += 5
@@ -319,7 +319,7 @@ def build_magazine():
 
     # ==================== PAGE 3: THE PROBLEM ====================
     pdf.dark_page()
-    pdf.top_bar('The Problem', 3)
+    pdf.top_bar('The Problem', 2)
 
     y = pdf.section_title('The $47 Billion Problem', "AI's insatiable appetite for power is creating a crisis that grid operators can no longer ignore.")
     y = pdf.lead_text("When ERCOT approved the Passive Controllable Load Resource framework on June 18, 2026, it wasn't just creating a new regulatory category  -  it was acknowledging a fundamental shift in how the electrical grid interacts with the largest power consumers on the planet.", y)
@@ -364,7 +364,7 @@ def build_magazine():
 
     # ==================== PAGE 4: ENTER ENERGIVANU ====================
     pdf.dark_page()
-    pdf.top_bar('The Solution', 4)
+    pdf.top_bar('The Solution', 3)
 
     y = pdf.section_title('Enter Energivanu', 'The open-source execution engine that fills the gap between grid signals and GPU clusters.')
     y = pdf.lead_text("Energivanu is what happens when you treat data center power optimization as a machine learning problem instead of a facilities management problem. The result is a 613,000-parameter neural network that can predict power spikes, dispatch battery storage, and stagger training phases  -  all in under 21 seconds.", y)
@@ -393,7 +393,11 @@ def build_magazine():
 
     pdf.set_y(y_cards + 2 * (card_h + 3) + 5)
 
-    y = pdf.heading2('Three Engines, One Pipeline')
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('The Solution - Cont.', 4)
+    y = 20
+    y = pdf.heading2('Three Engines, One Pipeline', y)
 
     y = pdf.heading3('1. Power Prediction Engine')
     y = pdf.body_text("A Temporal Convolutional Network with Multi-Head Self-Attention that ingests 15 features across 30 timesteps and forecasts power consumption 10 steps ahead. The dual-head architecture simultaneously regresses power values and classifies optimal BESS dispatch signals.", y)
@@ -410,7 +414,7 @@ def build_magazine():
 
     # ==================== PAGE 5: ARCHITECTURE DEEP DIVE ====================
     pdf.dark_page()
-    pdf.top_bar('Technology', 5)
+    pdf.top_bar('Technology', 4)
 
     y = pdf.section_title('Architecture Deep Dive', 'Inside the neural network, the controller, and the features that make it work.')
 
@@ -431,6 +435,10 @@ def build_magazine():
 
     y = pdf.add_chart('response_timeline.png', 'End-to-End Response: Signal Parsing to Execution in Under 21 Seconds', pdf.get_y() + 2, 160)
 
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('Technology - Cont.', 5)
+    y = 20
     y = pdf.heading2('BESS Physics', y)
     y = pdf.body_text("The battery simulation uses PyBaMM for electrochemical modeling of LFP chemistry, tracking capacity fade, cycle counting, thermal dynamics, and SOC-dependent voltage curves. When PyBaMM isn't available, a simplified linear model with realistic LFP parameters provides fallback simulation.", y)
 
@@ -438,7 +446,7 @@ def build_magazine():
 
     # ==================== PAGE 6: TRAINING ====================
     pdf.dark_page()
-    pdf.top_bar('Training', 6)
+    pdf.top_bar('Training', 5)
 
     y = pdf.section_title('Training on 30 Lakh Rows', 'From 8,438% error to 20.3%  -  the iterative journey of building a production-grade prediction model.')
     y = pdf.lead_text("The Alibaba GPU Trace 2020 dataset contains telemetry from 6,500 GPUs across real data center operations. It's the largest publicly available GPU power dataset with a commercial-friendly CC BY 4.0 license.", y)
@@ -469,7 +477,7 @@ def build_magazine():
 
     # ==================== PAGE 7: VERIFIED PERFORMANCE ====================
     pdf.dark_page()
-    pdf.top_bar('Validation', 7)
+    pdf.top_bar('Validation', 6)
 
     y = pdf.section_title('Verified Performance', 'Real hardware. Real data. Real results. Every metric reproducible.')
 
@@ -483,6 +491,10 @@ def build_magazine():
     y += 35
     y = pdf.add_chart('bess_smoothing.png', 'Before & After BESS Optimization  -  30% Reduction in Grid Power Variance', y, 155)
 
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('Validation - Cont.', 7)
+    y = 20
     y = pdf.heading2('Real Hardware Validation', y)
     pdf.simple_table(
         ['Test', 'Status', 'Method', 'Result'],
@@ -507,7 +519,7 @@ def build_magazine():
 
     # ==================== PAGE 8: COMPETITIVE LANDSCAPE ====================
     pdf.dark_page()
-    pdf.top_bar('Competition', 8)
+    pdf.top_bar('Competition', 7)
 
     y = pdf.section_title('The Competitive Edge', "Energivanu isn't the first  -  but it's the only one combining all three capabilities in one open-source package.")
 
@@ -531,6 +543,10 @@ def build_magazine():
     y = pdf.heading2('The Integration Advantage', pdf.get_y() + 2)
     y = pdf.body_text("Individual components of Energivanu's pipeline exist elsewhere. Zeus optimizes per-GPU energy. GridPilot handles grid signal response. PyBaMM models battery physics. But no other project combines ML power prediction + BESS MPC + phase staggering in a single, deployable package.", y)
 
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('Competition - Cont.', 8)
+    y = 20
     y = pdf.heading2('The Open-Source Advantage', y)
     y = pdf.body_text("Proprietary solutions from Emerald AI and Phaidra require vendor lock-in and six-figure contracts. Energivanu is AGPLv3  -  free to use, modify, and deploy. For data center operators who want PCLR compliance without surrendering control, it's the only option.", y)
 
@@ -551,7 +567,7 @@ def build_magazine():
 
     # ==================== PAGE 9: MARKET & OPPORTUNITY ====================
     pdf.dark_page()
-    pdf.top_bar('Market', 9)
+    pdf.top_bar('Market', 8)
 
     y = pdf.section_title('Market & Opportunity', 'The convergence of AI scaling, grid constraints, and regulation creates a once-in-a-generation opportunity.')
     y = pdf.lead_text("The data center power optimization market sits at the intersection of three unstoppable forces: the exponential growth of AI compute, the physical limits of electrical grids, and the regulatory frameworks emerging to manage the collision.", y)
@@ -573,7 +589,11 @@ def build_magazine():
     pdf.info_box('3. Grid Capacity Limits',
                  'Transmission infrastructure takes 3-5 years to build. Data centers want to deploy in 12-18 months. The gap between demand and supply is widening.')
 
-    y = pdf.heading2('Revenue Model', pdf.get_y() + 2)
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('Market - Cont.', 9)
+    y = 20
+    y = pdf.heading2('Revenue Model', y)
     pdf.simple_table(
         ['Revenue Stream', 'Description', 'Market'],
         [
@@ -593,7 +613,7 @@ def build_magazine():
 
     # ==================== PAGE 10: ROAD AHEAD ====================
     pdf.dark_page()
-    pdf.top_bar('Future', 10)
+    pdf.top_bar('Future', 9)
 
     y = pdf.section_title('The Road Ahead', 'From Kaggle notebooks to production data centers  -  the path from validated prototype to deployed system.')
     y = pdf.lead_text("Energivanu has proven the concept. The models train, the controllers optimize, the signals parse, and the numbers are verified. The next chapter is about closing the gap between simulation and production.", y)
@@ -626,7 +646,11 @@ def build_magazine():
         pdf.line(20, y, 190, y)
         y += 3
 
-    y = pdf.heading2('The Vision', y + 2)
+    pdf.footer_bar()
+    pdf.dark_page()
+    pdf.top_bar('Future - Cont.', 10)
+    y = 20
+    y = pdf.heading2('The Vision', y)
     y = pdf.body_text("Energivanu's long-term vision is simple: every GPU data center should have an intelligent power management layer. Not as a luxury, not as a regulatory checkbox, but as fundamental infrastructure  -  as essential as networking or cooling.", y)
 
     y = pdf.body_text("The AI revolution is built on compute. Compute runs on power. And power, unlike compute, is bounded by physics, geography, and grid infrastructure. The companies that solve the power problem will be the ones that can scale AI without limits.", y)

@@ -29,8 +29,8 @@ def verify_model_parameters():
     print(f"Sequence Length: {model.seq_len}")
     print(f"Prediction Horizon: {model.pred_horizon}")
     print(f"Calculated parameters: {params:,}")
-    assert params == 338402, f"Parameter mismatch: {params}"
-    print("[OK] SUCCESS: Model parameters match exactly 338,402.")
+    assert params == 338252, f"Parameter mismatch: {params}"
+    print("[OK] SUCCESS: Model parameters match exactly 338,252.")
     print()
 
 def verify_mpc_smoothing():

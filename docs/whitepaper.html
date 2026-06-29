@@ -178,6 +178,19 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Animated Text Reveal */
+        .reveal-word {
+            opacity: 0.15;
+            transform: translateY(8px);
+            display: inline-block;
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            margin-right: 0.25em; /* Ensure spaces between inline-block spans */
+        }
+        .reveal-word.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
     </style>
 </head>
 <body>
@@ -204,6 +217,43 @@
     </main>
 
     <script>
+        // Recursive text node splitter to wrap words in spans for reveal animation
+        function revealTextNodes(element) {
+            let wordIndex = 0;
+            
+            function helper(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.nodeValue;
+                    // Split by whitespace but keep the spacing
+                    const words = text.split(/(\s+)/);
+                    const fragment = document.createDocumentFragment();
+                    
+                    words.forEach(w => {
+                        if (w.trim() === '') {
+                            fragment.appendChild(document.createTextNode(w));
+                        } else {
+                            const span = document.createElement('span');
+                            span.className = 'reveal-word';
+                            span.textContent = w;
+                            span.style.transitionDelay = `${wordIndex * 0.015}s`;
+                            fragment.appendChild(span);
+                            wordIndex++;
+                        }
+                    });
+                    node.parentNode.replaceChild(fragment, node);
+                } else {
+                    const children = Array.from(node.childNodes);
+                    children.forEach(child => {
+                        // Ignore code blocks, links, and formatted tags inside text reveal processing
+                        if (child.nodeName !== 'PRE' && child.nodeName !== 'CODE') {
+                            helper(child);
+                        }
+                    });
+                }
+            }
+            helper(element);
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             fetch('WHITEPAPER.md')
                 .then(response => {
@@ -213,7 +263,27 @@
                     return response.text();
                 })
                 .then(text => {
-                    document.getElementById('content').innerHTML = marked.parse(text);
+                    const contentDiv = document.getElementById('content');
+                    contentDiv.innerHTML = marked.parse(text);
+                    
+                    // Select headers, paragraphs, and list items for reveal
+                    const targets = contentDiv.querySelectorAll('h1, h2, h3, p, li');
+                    targets.forEach(el => {
+                        revealTextNodes(el);
+                    });
+
+                    // Set up intersection observer to trigger active class when scrolled into view
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const words = entry.target.querySelectorAll('.reveal-word');
+                                words.forEach(word => word.classList.add('active'));
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+                    targets.forEach(el => observer.observe(el));
                 })
                 .catch(error => {
                     document.getElementById('content').innerHTML = '<p>Error loading documentation. Please view directly on <a href="https://github.com/mysterious75/energivanu2">GitHub</a>.</p>';

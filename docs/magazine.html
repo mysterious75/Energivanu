@@ -3,37 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energivanu | Insights Magazine</title>
+    <title>Energivanu Insights | Digital Magazine</title>
     
-    <!-- Google Fonts for MNTN Aesthetic -->
+    <!-- Google Fonts: Modern Sans-Serif for Avenir Bento Aesthetic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
     
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --bg-color: #f4f1ee;
-            --text-main: #1a1615;
-            --text-muted: #693f3d;
-            --accent: #c9502e;
-            --font-heading: 'Playfair Display', serif;
-            --font-body: 'Inter', sans-serif;
+            --bg-color: #08090a;
+            --card-bg: #111215;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #8a8f98;
+            --accent: #5e6ad2; /* Modern clean indigo/purple accent */
+            --accent-glow: rgba(94, 106, 210, 0.15);
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            scroll-behavior: smooth;
         }
 
         body {
             background-color: var(--bg-color);
-            color: var(--text-main);
+            color: var(--text-primary);
             font-family: var(--font-body);
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            line-height: 1.6;
         }
 
         /* --- NAVBAR --- */
@@ -46,18 +50,17 @@
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            background: rgba(244, 241, 238, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(26, 22, 21, 0.05);
+            background: rgba(8, 9, 10, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
         }
         .logo {
-            font-family: var(--font-heading);
+            font-family: var(--font-display);
             font-size: 1.5rem;
             font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            letter-spacing: -0.5px;
             text-decoration: none;
-            color: var(--text-main);
+            color: var(--text-primary);
         }
         .nav-links {
             display: flex;
@@ -65,64 +68,375 @@
             align-items: center;
         }
         .nav-links a {
-            color: var(--text-main);
+            color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
             transition: color 0.3s ease;
         }
         .nav-links a:hover {
-            color: var(--accent);
+            color: var(--text-primary);
         }
 
-        main {
-            flex-grow: 1;
+        /* --- HERO --- */
+        .hero {
+            padding: 180px 10% 80px 10%;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .hero-tag {
+            background: var(--accent-glow);
+            color: #9ba1ff;
+            border: 1px solid rgba(155, 161, 255, 0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: 4.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 1.5rem;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .pdf-btn {
+            background: var(--text-primary);
+            color: var(--bg-color);
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- BENTO GRID --- */
+        .bento-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 5% 100px 5%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .bento-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            position: relative;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            padding: 0;
-            margin-top: 80px; /* offset for fixed navbar */
-            width: 100%;
-            height: calc(100vh - 80px);
+            justify-content: space-between;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .bento-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
-        .magazine-container {
-            width: 100%;
-            height: 100%;
-            background: #2a2a2e; /* PDF viewer typical dark gray background */
-            position: relative;
+        /* Card Sizes */
+        .col-2 {
+            grid-column: span 2;
+        }
+        .col-3 {
+            grid-column: span 3;
         }
 
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .card-num {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
             display: block;
+        }
+        .bento-card h2 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        .bento-card p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Embed elements inside cards */
+        .card-viz {
+            margin-top: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .viz-metric {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 700;
+            color: #9ba1ff;
+        }
+        .viz-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Timeline list inside bento */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.8rem;
+        }
+        .time-label {
+            font-weight: 600;
+            color: #9ba1ff;
+        }
+
+        /* Table inside bento */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.8rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        th {
+            font-family: var(--font-display);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        /* Fade-in */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
     </style>
 </head>
 <body>
 
-    <nav id="navbar">
+    <nav>
         <a href="index.html" class="logo">Energivanu</a>
         <div class="nav-links">
             <a href="index.html">Equipment</a>
             <a href="whitepaper.html">Whitepaper</a>
-            <a href="magazine.html" style="color: var(--accent);">Magazine</a>
+            <a href="magazine.html" style="color: var(--text-primary);">Magazine</a>
             <a href="https://github.com/mysterious75/energivanu2">GitHub</a>
         </div>
     </nav>
 
-    <main>
-        <div class="magazine-container">
-            <iframe src="magazine/Energivanu_Insights_Magazine.pdf?v=5#toolbar=0&navpanes=0&view=FitH" title="Energivanu Insights Magazine">
-                <p>Your browser does not support PDFs. <a href="magazine/Energivanu_Insights_Magazine.pdf">Download the PDF</a>.</p>
-            </iframe>
+    <header class="hero fade-in">
+        <span class="hero-tag">INSIGHTS MAGAZINE</span>
+        <h1>Dynamic Grid Optimization.</h1>
+        <p>A digital showcase of Energivanu Insights — exploring the intersection of AI compute power and electrical grids.</p>
+        <a href="magazine/Energivanu_Insights_Magazine.pdf?v=5" class="pdf-btn" target="_blank">Download Full Issue (PDF)</a>
+    </header>
+
+    <main class="bento-container">
+        
+        <!-- CARD 1 -->
+        <div class="bento-card col-2 fade-in">
+            <div>
+                <span class="card-num">01 / MARKET OUTLOOK</span>
+                <h2>The $47 Billion Grid Interconnection Problem.</h2>
+                <p>AI workloads consume an estimated 820 GW globally. The ERCOT grid alone faces a 410 GW large-load queue — and 87% of those applications are for data centers. The gap between compute demands and grid capacity is growing daily.</p>
+            </div>
+            <div class="card-viz">
+                <canvas id="marketChart" style="max-height: 200px;"></canvas>
+            </div>
         </div>
+
+        <!-- CARD 2 -->
+        <div class="bento-card fade-in">
+            <div>
+                <span class="card-num">02 / CORE TOOLKIT</span>
+                <h2>Enter Energivanu.</h2>
+                <p>An open-source execution layer combining predictive models and controllers to help clusters satisfy the ERCOT PCLR framework.</p>
+            </div>
+            <div class="card-viz" style="flex-direction: row; justify-content: space-around;">
+                <div>
+                    <span class="viz-label">Active Params</span>
+                    <div class="viz-metric">613K</div>
+                </div>
+                <div>
+                    <span class="viz-label">MAPE Loss</span>
+                    <div class="viz-metric" style="color: #64dfdf;">20.3%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="bento-card fade-in">
+            <div>
+                <span class="card-num">03 / PERFORMANCE</span>
+                <h2>Verified Benchmarks.</h2>
+                <p>Empirical metrics validated directly on real Tesla P100 hardware clusters.</p>
+            </div>
+            <div class="card-viz">
+                <div>
+                    <span class="viz-label">Grid Variance Reduction</span>
+                    <div class="viz-metric" style="color: #64dfdf;">30.0%</div>
+                </div>
+                <div>
+                    <span class="viz-label">Peak Demand Shaving</span>
+                    <div class="viz-metric">10.5%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 4 -->
+        <div class="bento-card col-2 fade-in">
+            <div>
+                <span class="card-num">04 / THE JOURNEY</span>
+                <h2>Training on 30 Lakh Rows.</h2>
+                <p>From 8,438% MAPE to 20.3% — the iterative optimization journey utilizing Alibaba's real GPU telemetry trace data.</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Dataset</th>
+                        <th>Parameters</th>
+                        <th>MAPE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>v1 (Base)</td>
+                        <td>MIT Supercloud</td>
+                        <td>338K</td>
+                        <td>8438%</td>
+                    </tr>
+                    <tr>
+                        <td>v2</td>
+                        <td>Alibaba (Sample)</td>
+                        <td>338K</td>
+                        <td>75.4%</td>
+                    </tr>
+                    <tr>
+                        <td>v3</td>
+                        <td>Alibaba (Full)</td>
+                        <td>338K</td>
+                        <td>37.28%</td>
+                    </tr>
+                    <tr style="font-weight: bold; color: #9ba1ff;">
+                        <td>v4 (Production)</td>
+                        <td>Alibaba (Raw)</td>
+                        <td>613K</td>
+                        <td>20.3%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CARD 5 -->
+        <div class="bento-card col-3 fade-in">
+            <div>
+                <span class="card-num">05 / TIMELINE</span>
+                <h2>The Development Roadmap.</h2>
+                <p>Our milestone plan from isolated university simulation runs to complete Modbus-integrated live battery storage execution.</p>
+            </div>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <span class="time-label">Q3 2026</span>
+                    <span>16-32 GPU university pilot deployments</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="time-label">Q4 2026</span>
+                    <span>Transition from nvidia-smi to real-time DCGM telemetry</span>
+                </div>
+                <div class="timeline-item">
+                    <span class="time-label">Q1 2027</span>
+                    <span>Tesla Megapack Modbus/TCP client integration</span>
+                </div>
+            </div>
+        </div>
+
     </main>
 
+    <script>
+        // Intersection Observer for fade-in animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Setup Chart
+        const ctx = document.getElementById('marketChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['2024', '2025', '2026', '2027', '2028', '2029', '2030'],
+                datasets: [{
+                    label: 'Global Data Center Power (GW)',
+                    data: [400, 520, 680, 850, 1000, 1140, 1260],
+                    borderColor: '#5e6ad2',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#8a8f98' } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8a8f98' } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

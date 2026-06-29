@@ -63,23 +63,27 @@ See [`alibaba-training/`](alibaba-training/) for full training documentation.
 
 ### ✅ Kaggle Gap Validation (June 2026)
 
-All 4 critical gaps validated on Kaggle T4 GPU. See [`validation_output/validation_report.json`](validation_output/validation_report.json) for full results.
+All 4 core system components validated in simulation on Kaggle T4 GPU. See [`validation_output/validation_report.json`](validation_output/validation_report.json) for full results.
 
-| Gap | Status | Key Result |
-|-----|--------|------------|
-| **Production Validation** | ✅ PASS | 60 real telemetry samples, 198.8W mean power |
-| **MPC + Phase Staggering** | ✅ PASS | 30.0% smoothing, 58.98% variance reduction |
-| **BESS Physics** | ✅ PASS | 200 steps, LFP chemistry, Modbus working |
-| **Grid Integration** | ✅ PASS | OpenADR 4 events, ERCOT 4 signals, PCLR compliant (120s < 600s deadline) |
+> ⚠️ **Validation Scope — Please Read Before Citing:**
+> All results below are **simulation-verified** on a single 8-GPU Kaggle node. No real BESS hardware, real ERCOT grid connection, or production multi-GPU cluster has been used. These are engineering benchmarks, not production deployment results.
+
+| Component | Simulation Status | Key Result |
+|-----------|-------------------|------------|
+| **Smoke Test (Kaggle Dry-Run)** | Verified (60 samples) | 198.8W mean power, no crash on 60-step run |
+| **MPC + Phase Staggering** | Simulation-Verified | 30.0% smoothing, 58.98% variance reduction |
+| **BESS Physics (Mock Modbus)** | Simulation-Verified | 200 steps LFP chemistry via mock Modbus server, hardware pending |
+| **Grid Response Logic** | Simulation-Verified | PCLR-style 120s response logic (not ERCOT-certified) |
 
 ---
 
-> ⚠️ **Scale & Validation Disclaimer:**
-> * **Single-Node Validation**: Power prediction validated on single 8-GPU H100 node and Kaggle Tesla P100.
-> * **Simulated BESS**: MPC controller uses simulated battery physics (PyBaMM LFP), not connected to real hardware.
-> * **Grid Integration**: OpenADR/SCED modules validated in simulation, not connected to real ERCOT systems.
-> * **No DCGM Integration**: Telemetry uses nvidia-smi polling, not NVIDIA DCGM.
-> * **Extrapolation Limits**: Scaling results to 100K+ GPU facilities is a mathematical projection, not empirical.
+> 📋 **Full Scope of Limitations:**
+> * **Single-Node Only**: Validated on single 8-GPU node (Kaggle Tesla P100). Not tested on multi-node clusters.
+> * **Mock Hardware**: BESS controller communicates with a mock Modbus server — no real battery hardware involved.
+> * **Simulation Grid**: OpenADR/ERCOT SCED modules run in simulation only — not connected to live grid signals.
+> * **No PCLR Certification**: PCLR compliance is a formal ERCOT regulatory process requiring physical site audit. This software implements PCLR-compatible response logic but is **not ERCOT-certified**.
+> * **No DCGM**: Telemetry uses nvidia-smi polling, not NVIDIA DCGM enterprise tooling.
+> * **Scale Projections**: Results extrapolated to 100K+ GPU facilities are mathematical estimates, not empirically validated.
 
 ---
 

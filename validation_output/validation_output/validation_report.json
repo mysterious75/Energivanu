@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-06-29T03:50:40.806373+00:00",
+  "device": "cuda",
+  "gpu_name": "Tesla P100-PCIE-16GB",
+  "gaps": {
+    "gap1_production": {
+      "gap": "production_validation",
+      "mode": "real_hardware",
+      "samples": 60,
+      "power_mean_w": 26.3,
+      "power_max_w": 26.3,
+      "power_std_w": 0.1,
+      "temp_mean_c": 35.0,
+      "temp_max_c": 36.0,
+      "util_mean_pct": 0.0
+    },
+    "gap2_mpc": {
+      "gap": "mpc_controller",
+      "input_samples": 60,
+      "smoothing_pct": 100.0,
+      "grid_std": 0.0,
+      "raw_std": 0.02,
+      "mae": 194.742,
+      "final_soc": 0.5228
+    },
+    "gap3_bess": {
+      "gap": "bess_physics",
+      "chemistry": "LFP",
+      "capacity_mwh": 655.2,
+      "steps": 200,
+      "final_soc": 0.4999,
+      "min_soc": 0.4999,
+      "max_soc": 0.5,
+      "max_temp_c": 55,
+      "cycle_count": 0.0,
+      "capacity_fade_pct": 0.0
+    },
+    "gap4_grid": {
+      "gap": "grid_integration",
+      "openadr_events": 4,
+      "sced_signals": 4,
+      "compliance": {
+        "compliant": true,
+        "error_mw": 2.0,
+        "deadband_mw": 5.0,
+        "response_time_s": 120,
+        "deadline_s": 600
+      },
+      "events": [
+        {
+          "level": "NORMAL",
+          "action": "none"
+        },
+        {
+          "level": "MODERATE",
+          "action": "reduce_10pct"
+        },
+        {
+          "level": "HIGH",
+          "action": "reduce_30pct"
+        },
+        {
+          "level": "CRITICAL",
+          "action": "reduce_50pct_plus"
+        }
+      ],
+      "signals": [
+        {
+          "base_mw": 200.0,
+          "type": "normal",
+          "action": "increase"
+        },
+        {
+          "base_mw": 150.0,
+          "type": "reduce",
+          "action": "reduce"
+        },
+        {
+          "base_mw": 100.0,
+          "type": "reduce",
+          "action": "reduce"
+        },
+        {
+          "base_mw": 60.0,
+          "type": "reduce",
+          "action": "reduce"
+        }
+      ]
+    }
+  },
+  "summary": {
+    "total_gaps": 4,
+    "passed": 4,
+    "failed": 0
+  }
+}

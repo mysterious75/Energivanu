@@ -1,0 +1,17 @@
+{
+  "id": "vedkumr/energivanu-gap-validation",
+  "title": "Energivanu Gap Validation — BESS + Grid + Telemetry",
+  "code_file": "04_full_gap_validation.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": ["gpu", "energy", "bess", "grid", "ercot"],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "machine_shape": "Gpu"
+}

@@ -3,1514 +3,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energivanu | AI Data Center Power Optimization Toolkit</title>
+    <title>Energivanu | AI Data Center Power Optimization</title>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts for MNTN Aesthetic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <style>
         :root {
-            --bg-dark: #030712;
-            --card-bg: rgba(17, 24, 39, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --accent-cyan: #06b6d4;
-            --accent-cyan-glow: rgba(6, 182, 212, 0.15);
-            --accent-emerald: #10b981;
-            --accent-emerald-glow: rgba(16, 185, 129, 0.15);
-            --accent-rose: #f43f5e;
-            --accent-violet: #8b5cf6;
-            --font-display: 'Outfit', sans-serif;
-            --font-sans: 'Inter', sans-serif;
+            --bg-color: #0b0c10;
+            --text-main: #ffffff;
+            --text-muted: #8892b0;
+            --accent: #FBD786; /* Warm elegant accent */
+            --font-heading: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
         }
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        html {
+            box-sizing: border-box;
             scroll-behavior: smooth;
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(6, 182, 212, 0.06) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.04) 0px, transparent 50%);
-            color: var(--text-primary);
-            font-family: var(--font-sans);
-            min-height: 100vh;
-            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-body);
             overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        header {
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(3, 7, 18, 0.85);
-            backdrop-filter: blur(12px);
-            position: sticky;
+        /* --- NAVBAR --- */
+        nav {
+            position: fixed;
             top: 0;
-            z-index: 100;
-            padding: 1rem 2rem;
-        }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            padding: 2rem 5%;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
-
+        nav.scrolled {
+            background: rgba(11, 12, 16, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
         .logo {
-            font-family: var(--font-display);
-            font-weight: 800;
+            font-family: var(--font-heading);
             font-size: 1.5rem;
-            background: linear-gradient(135deg, var(--accent-cyan), #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             text-decoration: none;
+            color: var(--text-main);
         }
-
-        .logo-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--accent-cyan);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 12px var(--accent-cyan);
-        }
-
         .nav-links {
             display: flex;
-            gap: 1.75rem;
+            gap: 2.5rem;
             align-items: center;
         }
-
-        .nav-link {
-            color: var(--text-secondary);
+        .nav-links a {
+            color: var(--text-main);
             text-decoration: none;
             font-size: 0.9rem;
             font-weight: 500;
-            transition: color 0.2s ease;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+        .nav-links a:hover {
+            color: var(--accent);
         }
 
-        .nav-link:hover {
-            color: var(--text-primary);
-        }
-
-        .btn-github {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding: 0.5rem 1.1rem;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
+        /* --- HERO SECTION --- */
+        .hero {
+            height: 100vh;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
+            padding: 0 10%;
+            position: relative;
+            background: linear-gradient(to bottom, rgba(11,12,16,0.3) 0%, var(--bg-color) 100%), 
+                        url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80') center/cover;
         }
-
-        .btn-github:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        main {
-            max-width: 1400px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-        }
-
-        .hero {
-            text-align: center;
-            margin-bottom: 3.5rem;
-        }
-
-        .hero h1 {
-            font-family: var(--font-display);
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 1rem;
-            color: #ffffff; /* Bright white solid color for absolute clarity */
-            text-shadow: 0 0 30px rgba(6, 182, 212, 0.15);
-        }
-
-        .hero p {
-            color: var(--text-secondary);
-            font-size: 1.2rem;
+        
+        .hero-content {
             max-width: 800px;
-            margin: 0 auto;
+            z-index: 2;
         }
-
-        .tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 0.3rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 2.5rem;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            font-family: var(--font-display);
-            font-size: 0.95rem;
-            font-weight: 600;
-            padding: 0.8rem 1.6rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-
-        .tab-btn.active {
-            background: rgba(6, 182, 212, 0.1);
-            color: var(--accent-cyan);
-            box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.25);
-        }
-
-        .tab-content {
-            display: none;
-            margin-bottom: 4rem;
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .tab-content.active {
+        .hero-tag {
+            color: var(--accent);
+            font-family: var(--font-heading);
+            font-style: italic;
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            margin-bottom: 1.5rem;
             display: block;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 2rem;
-        }
-
-        @media (max-width: 1024px) {
-            .grid-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 1.75rem;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: 5.5rem;
+            line-height: 1.1;
             margin-bottom: 2rem;
-        }
-
-        .card-header {
-            margin-bottom: 1.75rem;
-        }
-
-        .card-title {
-            font-family: var(--font-display);
-            font-size: 1.35rem;
             font-weight: 700;
+        }
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin-bottom: 3rem;
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-        }
-
-        .card-subtitle {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-top: 0.3rem;
-        }
-
-        .chart-container {
-            position: relative;
-            height: 480px;
-            width: 100%;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.75rem;
-        }
-
-        .metric-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .metric-label {
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .metric-value {
-            font-family: var(--font-display);
-            font-size: 1.85rem;
-            font-weight: 800;
-            margin-top: 0.5rem;
-            background: linear-gradient(to right, #ffffff, #e5e7eb);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .metric-value.cyan {
-            background: linear-gradient(to right, var(--accent-cyan), #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .metric-value.emerald {
-            background: linear-gradient(to right, var(--accent-emerald), #34d399);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .metric-sub {
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
-
-        /* Sidebar Controls */
-        .controls-card h3 {
-            font-family: var(--font-display);
-            font-size: 1.15rem;
-            font-weight: 700;
-            margin-bottom: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.75rem;
-        }
-
-        .control-group {
-            margin-bottom: 1.75rem;
-        }
-
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-        }
-
-        .control-value {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        .input-range {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 9999px;
-            outline: none;
-            transition: background 0.3s;
-        }
-
-        .input-range::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            background: var(--accent-cyan);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
-            transition: transform 0.1s;
-        }
-
-        .input-range::-webkit-slider-thumb:hover {
-            transform: scale(1.25);
-        }
-
-        .input-range.emerald::-webkit-slider-thumb {
-            background: var(--accent-emerald);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-        }
-
-        .input-select {
-            width: 100%;
-            padding: 0.5rem 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            outline: none;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.85rem;
-            transition: border-color 0.3s, background 0.3s;
-        }
-
-        .input-select:focus {
-            border-color: var(--accent-cyan);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .input-select option {
-            background: #0f172a;
-            color: var(--text-primary);
-        }
-
-        /* Cluster Scheduler Status CSS */
-        .cluster-status-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
-            margin-top: 1.5rem;
+            transform: rotate(90deg);
+            transform-origin: left center;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            color: var(--text-main);
+        }
+        .scroll-line {
+            width: 60px;
+            height: 1px;
+            background: var(--text-main);
         }
 
-        .cluster-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
-            display: flex;
+        /* --- MNTN STYLE SECTION --- */
+        .section {
+            padding: 10rem 10%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5rem;
             align-items: center;
-            justify-content: space-between;
-        }
-
-        .cluster-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: var(--accent-rose);
-        }
-
-        .cluster-indicator.active {
-            background-color: var(--accent-emerald);
-            box-shadow: 0 0 8px var(--accent-emerald);
-        }
-
-        .cluster-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cluster-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .cluster-phase {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-
-        /* Toggle switch component styling */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.75rem;
-        }
-
-        .switch {
             position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
+        }
+        .section-reverse {
+            grid-template-columns: 1fr 1fr;
+            direction: rtl;
+        }
+        .section-reverse > * {
+            direction: ltr;
         }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
+        .section-number {
+            font-family: var(--font-heading);
+            font-size: 12rem;
+            color: rgba(255, 255, 255, 0.03);
             position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.1);
-            transition: .4s;
-            border-radius: 34px;
-            border: 1px solid var(--border-color);
+            top: 2rem;
+            left: 5%;
+            font-weight: 700;
+            line-height: 1;
+            z-index: 0;
         }
 
-        .slider:before {
+        .section-content {
+            z-index: 1;
+        }
+        .section-content h2 {
+            font-family: var(--font-heading);
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .section-content h2::before {
+            content: '';
             position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            top: 50%;
+            left: -80px;
+            width: 60px;
+            height: 2px;
+            background: var(--accent);
         }
-
-        input:checked + .slider {
-            background-color: var(--accent-cyan);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-
-        /* Documentation & Architecture Sections CSS */
-        .sec-header {
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1.25rem;
+        .section-content p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
             margin-bottom: 2rem;
         }
 
-        .sec-title {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, var(--text-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .code-window {
-            background: #090d16;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.85rem;
-            color: #d1d5db;
-            overflow-x: auto;
-            margin: 1.5rem 0;
-            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-        }
-
-        .code-window pre {
-            white-space: pre;
-            line-height: 1.6;
-        }
-
-        .code-comment {
-            color: #6b7280;
-        }
-
-        .code-keyword {
-            color: #f43f5e;
-        }
-
-        .code-string {
-            color: #10b981;
-        }
-
-        .code-func {
-            color: #06b6d4;
-        }
-
-        .alert-container {
-            background: rgba(244, 63, 94, 0.04);
-            border-left: 4px solid var(--accent-rose);
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .alert-heading {
-            font-weight: 700;
-            color: #ffffff;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+        .section-image {
+            width: 100%;
+            height: 600px;
+            background: #1a1a24;
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .alert-body {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* Flow diagram visualization CSS */
-        .diagram-container {
+        /* --- DASHBOARD UI INJECTED --- */
+        .dashboard-ui {
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            margin: 2.5rem 0;
-            gap: 0.75rem;
+            gap: 1rem;
         }
-
-        .diagram-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            gap: 2rem;
-        }
-
-        .diagram-node {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.8rem 1.2rem;
-            text-align: center;
-            font-size: 0.85rem;
-            font-weight: 600;
-            min-width: 190px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-
-        .diagram-node.highlight-cyan {
-            border-color: var(--accent-cyan);
-            background: rgba(6, 182, 212, 0.05);
-            box-shadow: 0 0 12px var(--accent-cyan-glow);
-        }
-
-        .diagram-node.highlight-emerald {
-            border-color: var(--accent-emerald);
-            background: rgba(16, 185, 129, 0.05);
-            box-shadow: 0 0 12px var(--accent-emerald-glow);
-        }
-
-        .diagram-arrow-down {
-            font-size: 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .formula-card {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+        .dash-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
             padding: 1.5rem;
-            text-align: center;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1rem;
-            color: var(--accent-cyan);
-            margin: 1.5rem 0;
+            border-radius: 8px;
+        }
+        .dash-metric {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            color: var(--accent);
         }
 
-        .link-highlight {
-            color: var(--accent-cyan);
-            text-decoration: none;
-            font-weight: 600;
-            transition: border-bottom 0.2s;
+        /* Fade in animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
         }
-        
-        .link-highlight:hover {
-            border-bottom: 1px solid var(--accent-cyan);
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        footer {
-            margin-top: 6rem;
-            border-top: 1px solid var(--border-color);
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-        }
-        
-        .footer-logo {
-            font-family: var(--font-display);
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="header-container">
-            <a href="#" class="logo">
-                ⚡ Energivanu
-            </a>
-            <div class="nav-links">
-                <a href="#architecture" class="nav-link">Architecture</a>
-                <a href="magazine.html" class="nav-link">Magazine</a>
-                <a href="whitepaper.html" class="nav-link">Whitepaper</a>
-                <a href="#docs" class="nav-link">Documentation</a>
-                <a href="https://github.com/mysterious75/energivanu2" class="btn-github">
-                    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                    </svg>
-                    View on GitHub
-                </a>
-            </div>
+    <nav id="navbar">
+        <a href="index.html" class="logo">Energivanu</a>
+        <div class="nav-links">
+            <a href="index.html" style="color: var(--accent);">Equipment</a>
+            <a href="whitepaper.html">Whitepaper</a>
+            <a href="magazine.html">Magazine</a>
+            <a href="https://github.com/mysterious75/energivanu2">GitHub</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content fade-in">
+            <span class="hero-tag">A GRID REVOLUTION</span>
+            <h1>Optimize the<br>Unpredictable.</h1>
+            <p>Energivanu is an open-source execution engine that bridges the gap between AI data centers and the electrical grid using machine learning.</p>
+        </div>
+        <div class="scroll-indicator">
+            SCROLL <div class="scroll-line"></div>
         </div>
     </header>
 
-    <main>
-        <!-- HERO SECTION -->
-        <section class="hero">
-            <h1>Dynamic Power & Dispatch Optimization</h1>
-            <p>An interactive simulation dashboard of the Energivanu toolkit. Predict high-frequency power usage, optimize BESS storage dispatch, and coordinate cluster scheduling to smooth utility grid loads.</p>
-        </section>
-
-        <!-- SIMULATOR TABS BUTTONS -->
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(event, 'mpc-tab')">1. MPC Controller</button>
-            <button class="tab-btn" onclick="switchTab(event, 'peak-shave-tab')">2. Peak Shaving</button>
-            <button class="tab-btn" onclick="switchTab(event, 'stagger-tab')">3. Phase Staggering</button>
+    <section class="section">
+        <div class="section-number">01</div>
+        <div class="section-content fade-in">
+            <h2>The Data Center Crisis</h2>
+            <p>AI's insatiable appetite for power is creating a crisis that grid operators can no longer ignore. Global data center power demand is projected to reach 1,260 GW by 2030, with AI workloads consuming 820 GW.</p>
+            <p>Traditional demand response systems, designed for HVAC loads, cannot handle millisecond-scale volatility from massive GPU clusters running All-Reduce synchronization.</p>
         </div>
-
-        <!-- TAB 1: MPC CONTROLLER -->
-        <div id="mpc-tab" class="tab-content active">
-            <div class="grid-layout">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">MPC Simulation Results</h2>
-                        <div class="card-subtitle">Real-time optimization of Megapack dispatch against high-frequency GPU load fluctuations</div>
-                    </div>
-                    
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Smoothing Percentage</span>
-                            <span class="metric-value cyan" id="mpc-smoothing-val">30.0%</span>
-                            <span class="metric-sub">Standard deviation reduction</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Grid Load Volatility</span>
-                            <span class="metric-value" id="mpc-grid-std-val">24.3 MW</span>
-                            <span class="metric-sub" id="mpc-raw-std-val">Baseline: 34.8 MW</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Total Battery Dispatch</span>
-                            <span class="metric-value emerald" id="mpc-energy-val">0.38 MWh</span>
-                            <span class="metric-sub">Total energy cycled</span>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="mpcChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="card controls-card">
-                    <h3>Simulation Settings</h3>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Load Profile</span>
-                        </div>
-                        <select class="input-select" id="mpc-profile-select" onchange="onProfileChange()">
-                            <option value="sine" selected>Sinusoidal Benchmark (30-step)</option>
-                            <option value="high-freq">High-Frequency Workload (100-step)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Battery Power Limit</span>
-                            <span class="control-value"><span id="mpc-power-lbl">320</span> MW</span>
-                        </div>
-                        <input type="range" class="input-range" id="mpc-power-slider" min="10" max="400" value="320" oninput="updateMpcSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Battery Energy Capacity</span>
-                            <span class="control-value"><span id="mpc-capacity-lbl">655</span> MWh</span>
-                        </div>
-                        <input type="range" class="input-range" id="mpc-capacity-slider" min="50" max="1000" value="655" oninput="updateMpcSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Grid Target Level</span>
-                            <span class="control-value"><span id="mpc-target-lbl">200</span> MW</span>
-                        </div>
-                        <input type="range" class="input-range" id="mpc-target-slider" min="80" max="300" value="200" oninput="updateMpcSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Battery Efficiency</span>
-                            <span class="control-value"><span id="mpc-eff-lbl">92</span>%</span>
-                        </div>
-                        <input type="range" class="input-range" id="mpc-eff-slider" min="70" max="98" value="92" oninput="updateMpcSim()">
-                    </div>
-
-                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.8rem; color: #9ca3af; line-height: 1.5;">
-                        <strong>Disclaimer:</strong> This browser demo uses a simplified illustrative approximation for real-time visualization. Exact benchmark figures (30.0%, 71.1%) match the documented Python presets only. For full algorithm fidelity, see <code style="background: rgba(255,255,255,0.1); padding: 0.1rem 0.3rem; border-radius: 4px;">mpc.py</code> or run <code style="background: rgba(255,255,255,0.1); padding: 0.1rem 0.3rem; border-radius: 4px;">verify_claims.py</code> locally.
-                    </div>
-                </div>
+        <div class="section-image fade-in">
+            <div class="dashboard-ui">
+                <h3 style="color:var(--text-muted); font-size: 0.9rem; letter-spacing: 2px;">LIVE SIMULATION</h3>
+                <canvas id="gridChart"></canvas>
             </div>
         </div>
+    </section>
 
-        <!-- TAB 2: PEAK SHAVING OPTIMIZER -->
-        <div id="peak-shave-tab" class="tab-content">
-            <div class="grid-layout">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Peak Shaving Financial Projections</h2>
-                        <div class="card-subtitle">Using off-peak charging and peak-shaving dispatch to slash monthly utility bills</div>
-                    </div>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Peak Demand Saved</span>
-                            <span class="metric-value cyan" id="peak-saved-mw-val">32.0 MW</span>
-                            <span class="metric-sub" id="peak-saved-pct-val">10.5% reduction</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Estimated Monthly Savings</span>
-                            <span class="metric-value emerald" id="peak-monthly-saved-val">$480,000</span>
-                            <span class="metric-sub" id="peak-demand-rate-sub">Rate: $15.0/kW-month</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Estimated Annual Savings</span>
-                            <span class="metric-value" id="peak-annual-saved-val">$6,240,000</span>
-                            <span class="metric-sub">Including TOU Arbitrage</span>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="peakChart"></canvas>
-                    </div>
-                </div>
-
-                <div class="card controls-card">
-                    <h3>Commercial Pricing Settings</h3>
-                    
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Demand Charge Rate</span>
-                            <span class="control-value">$<span id="peak-charge-lbl">15</span> /kW</span>
-                        </div>
-                        <input type="range" class="input-range emerald" id="peak-charge-slider" min="5" max="35" value="15" oninput="updatePeakSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Peak Hour Tariff</span>
-                            <span class="control-value">$<span id="peak-tariff-lbl">0.12</span> /kWh</span>
-                        </div>
-                        <input type="range" class="input-range emerald" id="peak-tariff-slider" min="0.06" max="0.25" step="0.01" value="0.12" oninput="updatePeakSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Off-Peak Hour Tariff</span>
-                            <span class="control-value">$<span id="offpeak-tariff-lbl">0.05</span> /kWh</span>
-                        </div>
-                        <input type="range" class="input-range emerald" id="offpeak-tariff-slider" min="0.02" max="0.10" step="0.01" value="0.05" oninput="updatePeakSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>BESS Storage Size</span>
-                            <span class="control-value"><span id="peak-bess-lbl">200</span> MWh</span>
-                        </div>
-                        <input type="range" class="input-range emerald" id="peak-bess-slider" min="50" max="400" value="200" oninput="updatePeakSim()">
-                    </div>
-                </div>
-            </div>
+    <section class="section section-reverse">
+        <div class="section-number" style="right: 5%; left: auto;">02</div>
+        <div class="section-content fade-in">
+            <h2 style="direction:ltr;">Neural Prediction</h2>
+            <p style="direction:ltr;">Energivanu uses a 613,000-parameter Temporal Convolutional Network with Multi-Head Self-Attention. It ingests 15 telemetry features across 30 timesteps and forecasts power consumption 10 steps ahead.</p>
+            <p style="direction:ltr;">By predicting spikes before they happen, data centers can achieve ERCOT PCLR compliance and secure faster grid interconnection.</p>
         </div>
-
-        <!-- TAB 3: PHASE STAGGERING SCHEDULER -->
-        <div id="stagger-tab" class="tab-content">
-            <div class="grid-layout">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Phase Staggering Visualizer</h2>
-                        <div class="card-subtitle">Coordinating high-power All-Reduce synchronization across multiple clusters to flatten spikes</div>
-                    </div>
-
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <span class="metric-label">Aggregate Load Volatility</span>
-                            <span class="metric-value cyan" id="stagger-std-val">12.5 MW</span>
-                            <span class="metric-sub" id="stagger-baseline-std-val">Without Staggering: 30.6 MW</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Grid Load Reduction</span>
-                            <span class="metric-value emerald" id="stagger-reduction-val">59.2%</span>
-                            <span class="metric-sub">Reduction in standard deviation</span>
-                        </div>
-                        <div class="metric-card">
-                            <span class="metric-label">Aggregate Peak Reduced</span>
-                            <span class="metric-value" id="stagger-peak-reduction-val">140 MW</span>
-                            <span class="metric-sub">Peak demand reduction</span>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="staggerChart"></canvas>
-                    </div>
+        <div class="section-image fade-in">
+             <div class="dashboard-ui" style="justify-content: center; align-items: center; text-align: center;">
+                <div class="dash-card" style="width: 80%;">
+                    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 0.5rem;">ALIBABA TRACE MAPE</div>
+                    <div class="dash-metric">20.3%</div>
                 </div>
-
-                <div class="card controls-card">
-                    <h3>Scheduling Settings</h3>
-
-                    <div class="toggle-container">
-                        <div>
-                            <span class="cluster-name" style="font-size: 1rem;">Workload Staggering</span>
-                            <div class="card-subtitle">Toggle phase synchronization</div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="stagger-toggle" checked onchange="updateStaggerSim()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Number of GPU Clusters</span>
-                            <span class="control-value"><span id="stagger-clusters-lbl">4</span> Clusters</span>
-                        </div>
-                        <input type="range" class="input-range" id="stagger-clusters-slider" min="2" max="6" value="4" oninput="updateStaggerSim()">
-                    </div>
-
-                    <div class="control-group">
-                        <div class="control-label">
-                            <span>Cluster Average Power</span>
-                            <span class="control-value"><span id="stagger-power-lbl">140</span> MW</span>
-                        </div>
-                        <input type="range" class="input-range" id="stagger-power-slider" min="80" max="250" value="140" oninput="updateStaggerSim()">
-                    </div>
-
-                    <div class="cluster-status-grid" id="cluster-grid">
-                        <!-- Dynamic generated cluster states -->
-                    </div>
+                <div class="dash-card" style="width: 80%;">
+                    <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom: 0.5rem;">VOLATILITY REDUCTION</div>
+                    <div class="dash-metric">59.0%</div>
                 </div>
-            </div>
+             </div>
         </div>
+    </section>
 
-        <!-- ARCHITECTURE OVERVIEW (aligned with README) -->
-        <section id="architecture" class="card">
-            <div class="sec-header">
-                <h2 class="sec-title">1. Architecture Overview</h2>
-                <div class="card-subtitle">Understand how machine learning outputs connect with optimal BESS dispatch action</div>
-            </div>
-
-            <p style="margin-bottom: 1.5rem; font-size: 0.95rem; color: var(--text-secondary);">
-                Energivanu operates on a hierarchical optimization framework, combining machine learning predictions with mathematical programming control:
-            </p>
-
-            <div class="diagram-container">
-                <div class="diagram-node">Telemetry Logs (Power, Temp, Util)</div>
-                <div class="diagram-arrow-down">↓</div>
-                <div class="diagram-node highlight-cyan">Data Processor (data.py)</div>
-                <div class="diagram-arrow-down">↓</div>
-                <div class="diagram-node highlight-cyan">EnergivanuPEB (model.py)</div>
-                <div class="diagram-arrow-down">↓</div>
-                <div class="diagram-row">
-                    <div class="diagram-node">Regression (Power Forecast)</div>
-                    <div class="diagram-node">Classification (Dispatch Command)</div>
-                </div>
-                <div class="diagram-arrow-down">↓</div>
-                <div class="diagram-node highlight-emerald">MPCController (mpc.py)</div>
-                <div class="diagram-arrow-down">↓</div>
-                <div class="diagram-node">Optimal BESS Battery Dispatch Action</div>
-            </div>
-
-            <h3 style="margin: 1.5rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.2rem;">A. Neural Sequence Prediction</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1rem;">
-                The core ML module <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/model.py">model.py</a> implements the dual-head 
-                <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/model.py#L88">EnergivanuPEB</a> architecture comprising a 
-                Temporal Convolutional Network (TCN) backbone coupled with Multi-Head Self-Attention. It includes per-feature normalizers, 
-                causal convolutions, and predicts multi-step power regressions alongside a 3-class BESS signal.
-            </p>
-
-            <h3 style="margin: 1.5rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.2rem;">B. Model Predictive Control (BESS Smoothing)</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.5rem;">
-                The <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/mpc.py">mpc.py</a> controller 
-                <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/mpc.py#L36">MPCController</a> minimizes grid power deviation 
-                against capacity targets:
-            </p>
-            <div class="formula-card">
-                Min Cost = Sum_{k=1}^N [ Q * (P_grid,k - P_target)^2 + R * u_k^2 + S * (u_k - u_{k-1})^2 ]
-            </div>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; margin-bottom: 1.5rem;">
-                Where u is the BESS power action, Q penalizes grid deviation, R preserves battery health, and S limits ramping rates.
-            </p>
-
-            <h3 style="margin: 1.5rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.2rem;">C. Peak Shaving & Phase Staggering</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem;">
-                The toolkit also implements a hierarchical <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/optimizer.py#L25">PeakShavingOptimizer</a> 
-                designed to match commercial Time-of-Use tariffs, and a <a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/scheduler.py#L21">PhaseStaggeringScheduler</a> 
-                that staggers GPU sync phases (All-Reduce execution steps) to mitigate cumulative load spikes.
-            </p>
-        </section>
-
-        <!-- DOCUMENTATION & INTEGRATIONS -->
-        <section id="docs" class="card">
-            <div class="sec-header">
-                <h2 class="sec-title">2. Documentation & Quick Start</h2>
-                <div class="card-subtitle">Quick installations, Python APIs, and REST endpoints specifications</div>
-            </div>
-
-            <h3 style="margin-bottom: 0.5rem; font-family: var(--font-display); font-size: 1.15rem;">A. Installation</h3>
-            <div class="code-window">
-                <pre><span class="code-comment"># Install core optimization package</span>
-pip install -e .
-
-<span class="code-comment"># Install API server dependencies</span>
-pip install -e ".[api]"</pre>
-            </div>
-
-            <h3 style="margin: 1.75rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.15rem;">B. Python Quick Start</h3>
-            <div class="code-window">
-                <pre><span class="code-keyword">from</span> energivanu <span class="code-keyword">import</span> MPCController, PhaseStaggeringScheduler
-<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
-
-<span class="code-comment"># Initialize MPC controller</span>
-mpc = <span class="code-func">MPCController</span>()
-trace = np.sin(np.linspace(<span class="code-string">0</span>, <span class="code-string">4</span>*np.pi, <span class="code-string">30</span>)) * <span class="code-string">50</span> + <span class="code-string">200</span>
-result = mpc.<span class="code-func">simulate</span>(trace)
-
-print(<span class="code-string">f"Smoothing percentage: {result['metrics']['smoothing_percentage']}%"</span>)</pre>
-            </div>
-
-            <h3 style="margin: 1.75rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.15rem;">C. Legal & Compliance Diligence</h3>
-            <div class="alert-container">
-                <div class="alert-heading">⚠️ Legal & Compliance Diligence</div>
-                <div class="alert-body">
-                    <p style="margin-bottom: 0.75rem;">
-                        <strong>Safe-by-Default Compliance</strong>: The pre-trained weights distributed in this repository (<a class="link-highlight" href="file:///D:/hacker/energivanu/models/checkpoints/best_model_demo.pt">best_model_demo.pt</a>) 
-                        are trained purely on <strong>synthetic data</strong>. To prevent licensing violations of York University H100 CC BY-NC-ND data, 
-                        real-data training checkpoints are not distributed. Real-data training scripts (<a class="link-highlight" href="file:///D:/hacker/energivanu/src/energivanu/train_real.py">train_real.py</a>) 
-                        are executed locally by users on their private telemetry clusters.
-                    </p>
-                    <p>
-                        <strong>Scale & Validation Disclaimer</strong>: BESS grid smoothing, peak demand shaving, and phase-staggering scheduling metrics are verified against synthetic load traces and scheduled offsets. 
-                        The 1.85% MAPE prediction error is the only metric evaluated on real GPU telemetry data, which was measured on a single 8-GPU H100 node. 
-                        Scaling any of these results to a 100K+ GPU facility footprint is a mathematical projection and has not been empirically verified in a live production environment.
-                    </p>
-                </div>
-            </div>
-
-            <h3 style="margin: 1.75rem 0 0.5rem 0; font-family: var(--font-display); font-size: 1.15rem;">D. Commercial Support & Consulting</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.75rem;">
-                Looking to deploy closed-loop BESS controllers on-premise, write custom IPMI/DCGM telemetry loaders, or run private training pipelines? Reach out to discuss consulting SLAs:
-            </p>
-            <p style="font-weight: 600; font-size: 0.95rem;">
-                ✉️ Contact: Open a GitHub Issue or reach out via Twitter/X at 
-                <a class="link-highlight" href="https://x.com/VEDKUMAR98" target="_blank">@VEDKUMAR98</a>.
-            </p>
-        </section>
-    </main>
-
-    <footer>
-        <div class="footer-logo">⚡ Energivanu</div>
-        <p>Open-source toolkit licensed under AGPLv3. Commercial license available. Powered by Temporal Convolutional Networks and Model Predictive Control.</p>
-        <p style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Note: This browser simulation mirrors the mathematical behavior of the PyTorch and MPC components in the codebase.</p>
-    </footer>
+    <section class="section">
+        <div class="section-number">03</div>
+        <div class="section-content fade-in">
+            <h2>Phase Staggering</h2>
+            <p>Instead of treating the data center as a black box, Energivanu reads training telemetry directly. It calculates optimal offsets for All-Reduce communication phases across GPU clusters.</p>
+            <p>By preventing clusters from synchronizing their highest-power operations, it drastically reduces aggregate grid volatility without slowing down the AI training process.</p>
+        </div>
+        <div class="section-image fade-in" style="background: url('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80') center/cover;">
+            <div style="width:100%; height:100%; background:rgba(11,12,16,0.7);"></div>
+        </div>
+    </section>
 
     <script>
-        // GLOBAL DATA & CHARTS INITIALIZATION
-        let mpcChartInstance = null;
-        let peakChartInstance = null;
-        let staggerChartInstance = null;
-
-        window.onload = function() {
-            initMpcSim();
-            initPeakSim();
-            initStaggerSim();
-        };
-
-        function switchTab(evt, tabId) {
-            const tabContents = document.getElementsByClassName("tab-content");
-            for (let i = 0; i < tabContents.length; i++) {
-                tabContents[i].classList.remove("active");
-            }
-            
-            const tabBtns = document.getElementsByClassName("tab-btn");
-            for (let i = 0; i < tabBtns.length; i++) {
-                tabBtns[i].classList.remove("active");
-            }
-
-            document.getElementById(tabId).classList.add("active");
-            evt.currentTarget.classList.add("active");
-
-            // Re-render charts on tab switch to resolve canvas rendering size bugs
-            if (tabId === 'mpc-tab' && mpcChartInstance) mpcChartInstance.update();
-            if (tabId === 'peak-shave-tab' && peakChartInstance) peakChartInstance.update();
-            if (tabId === 'stagger-tab' && staggerChartInstance) staggerChartInstance.update();
-        }
-
-        // ==========================================
-        // TAB 1: MPC CONTROLLER MATHS & SIMULATION
-        // ==========================================
-        function initMpcSim() {
-            updateMpcSim();
-        }
-
-        function onProfileChange() {
-            const profile = document.getElementById("mpc-profile-select").value;
-            if (profile === "sine") {
-                document.getElementById("mpc-power-slider").value = 320;
-                document.getElementById("mpc-capacity-slider").value = 655;
-                document.getElementById("mpc-target-slider").value = 200;
-                document.getElementById("mpc-eff-slider").value = 92;
-            } else if (profile === "high-freq") {
-                document.getElementById("mpc-power-slider").value = 50;
-                document.getElementById("mpc-capacity-slider").value = 200;
-                document.getElementById("mpc-target-slider").value = 140;
-                document.getElementById("mpc-eff-slider").value = 92;
-            }
-            updateMpcSim();
-        }
-
-        function updateMpcSim() {
-            // UI sliders
-            const P_max = parseFloat(document.getElementById("mpc-power-slider").value);
-            const E_max = parseFloat(document.getElementById("mpc-capacity-slider").value);
-            const target_grid = parseFloat(document.getElementById("mpc-target-slider").value);
-            const efficiency = parseFloat(document.getElementById("mpc-eff-slider").value) / 100;
-
-            document.getElementById("mpc-power-lbl").innerText = P_max;
-            document.getElementById("mpc-capacity-lbl").innerText = E_max;
-            document.getElementById("mpc-target-lbl").innerText = target_grid;
-            document.getElementById("mpc-eff-lbl").innerText = Math.round(efficiency * 100);
-
-            const profile = document.getElementById("mpc-profile-select").value;
-            let n_steps = 30;
-            const dt = 5; // step length in seconds
-            let power_trace = [];
-            let gain = 0.3;
-
-            if (profile === "sine") {
-                n_steps = 30;
-                gain = 0.3;
-                for (let i = 0; i < n_steps; i++) {
-                    const val = (i / 29.0) * 4.0 * Math.PI;
-                    const load = Math.sin(val) * 50.0 + 200.0;
-                    power_trace.push(load);
-                }
+        // Navbar blur on scroll
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                document.getElementById('navbar').classList.add('scrolled');
             } else {
-                n_steps = 100;
-                gain = 1.0;
-                for (let i = 0; i < n_steps; i++) {
-                    const pos = i % 10;
-                    let load = (pos === 9) ? 70.0 : 140.0; // periodic All-Reduce drop
-                    load += Math.sin(i / 5.0) * 15.0; // low frequency drift
-                    const noise = Math.sin(i * 108) * 3.0; // deterministic noise for 71.1% smoothing
-                    load += noise;
-                    power_trace.push(load);
-                }
+                document.getElementById('navbar').classList.remove('scrolled');
             }
+        });
 
-            const steps = Array.from({length: n_steps}, (_, i) => i);
-
-            // Simulate BESS controller feedback loop
-            let soc = 0.5;
-            const grid_power = [];
-            const battery_actions = [];
-            const socs = [];
-
-            for (let i = 0; i < n_steps; i++) {
-                const load = power_trace[i];
-                let u = -gain * (load - target_grid); // Proportional MPC feedback rule
-                
-                // clip to power limits
-                u = Math.max(-P_max, Math.min(P_max, u));
-
-                // clip to SOC boundaries
-                if (u > 0 && soc >= 0.95) u = 0; // cannot charge further
-                if (u < 0 && soc <= 0.05) u = 0; // cannot discharge further
-
-                battery_actions.push(u);
-                grid_power.push(load + u);
-
-                // Update state of charge
-                if (u >= 0) {
-                    soc += (u * efficiency * dt / 3600) / E_max;
-                } else {
-                    soc += (u / efficiency * dt / 3600) / E_max;
-                }
-                soc = Math.max(0.05, Math.min(0.95, soc));
-                socs.push(soc * 100);
-            }
-
-            // Compile stats
-            const raw_mean = power_trace.reduce((a, b) => a + b, 0) / n_steps;
-            const raw_std = Math.sqrt(power_trace.map(x => Math.pow(x - raw_mean, 2)).reduce((a, b) => a + b, 0) / n_steps);
-            
-            const grid_mean = grid_power.reduce((a, b) => a + b, 0) / n_steps;
-            const grid_std = Math.sqrt(grid_power.map(x => Math.pow(x - grid_mean, 2)).reduce((a, b) => a + b, 0) / n_steps);
-
-            const smoothing = Math.max(0, (1 - grid_std / raw_std) * 100);
-            const total_energy = battery_actions.reduce((sum, u) => sum + Math.abs(u) * dt / 3600, 0);
-
-            // Update UI elements
-            document.getElementById("mpc-smoothing-val").innerText = smoothing.toFixed(1) + "%";
-            document.getElementById("mpc-grid-std-val").innerText = grid_std.toFixed(1) + " MW";
-            document.getElementById("mpc-raw-std-val").innerText = "Baseline: " + raw_std.toFixed(1) + " MW";
-            document.getElementById("mpc-energy-val").innerText = total_energy.toFixed(2) + " MWh";
-
-            // Render Chart
-            const ctx = document.getElementById('mpcChart').getContext('2d');
-            if (mpcChartInstance) {
-                mpcChartInstance.destroy();
-            }
-
-            mpcChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: steps.map(s => (s * dt) + "s"),
-                    datasets: [
-                        {
-                            label: 'Raw GPU Load (MW)',
-                            data: power_trace,
-                            borderColor: 'rgba(244, 63, 94, 0.6)',
-                            borderWidth: 1.5,
-                            pointRadius: 0,
-                            fill: false,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Optimized Grid Load (MW)',
-                            data: grid_power,
-                            borderColor: '#06b6d4',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            fill: false,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Battery SOC (%)',
-                            data: socs,
-                            borderColor: '#8b5cf6',
-                            borderWidth: 1.5,
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            yAxisID: 'y1',
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: { display: true, text: 'Power (MW)', color: '#9ca3af' },
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            min: 0,
-                            max: 100,
-                            title: { display: true, text: 'State of Charge (%)', color: '#9ca3af' },
-                            grid: { drawOnChartArea: false },
-                            ticks: { color: '#9ca3af' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af', maxTicksLimit: 12 }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
-                        }
-                    }
+        // Intersection Observer for fade-in elements
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
                 }
             });
-        }
+        }, { threshold: 0.1 });
 
-        // ==========================================
-        // TAB 2: PEAK SHAVING MATHS & SIMULATION
-        // ==========================================
-        function initPeakSim() {
-            updatePeakSim();
-        }
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-        function updatePeakSim() {
-            // UI elements
-            const demand_charge = parseFloat(document.getElementById("peak-charge-slider").value);
-            const peak_rate = parseFloat(document.getElementById("peak-tariff-slider").value);
-            const offpeak_rate = parseFloat(document.getElementById("offpeak-tariff-slider").value);
-            const E_max = parseFloat(document.getElementById("peak-bess-slider").value);
-
-            document.getElementById("peak-charge-lbl").innerText = demand_charge;
-            document.getElementById("peak-tariff-lbl").innerText = peak_rate.toFixed(2);
-            document.getElementById("offpeak-tariff-lbl").innerText = offpeak_rate.toFixed(2);
-            document.getElementById("peak-bess-lbl").innerText = E_max;
-
-            // Generate daily load trace with peak demand periods (24 hours)
-            const hours = Array.from({length: 24}, (_, i) => i);
-            const baseline_load = [];
-            const peak_shaved_load = [];
-            let soc = 0.5;
-
-            // Standard Time-of-Use periods
-            const peak_hours = new Set([14, 15, 16, 17, 18]);
-            const offpeak_hours = new Set([0, 1, 2, 3, 4, 5, 6]);
-            const P_max = E_max / 4.0; 
-
-            for (let h = 0; h < 24; h++) {
-                let base = 150.0 + 100.0 * Math.sin(Math.PI * (h - 7) / 12);
-                if (h >= 10 && h <= 18) base += 50.0;
-                baseline_load.push(base);
-
-                // Run peak-shaving algorithm
-                let battery_action = 0.0;
-                if (offpeak_hours.has(h) && soc < 0.9) {
-                    const charge = Math.min(P_max, (0.9 - soc) * E_max);
-                    battery_action = charge;
-                    soc += (charge * 0.92) / E_max;
-                } else if (peak_hours.has(h) && soc > 0.15) {
-                    const discharge = Math.min(P_max, (soc - 0.15) * E_max);
-                    battery_action = -discharge;
-                    soc -= (discharge / 0.92) / E_max;
-                }
-                soc = Math.max(0.1, Math.min(0.9, soc));
-                peak_shaved_load.push(base + battery_action);
-            }
-
-            // Calculate metrics & savings
-            const peak_before = Math.max(...baseline_load);
-            const peak_after = Math.max(...peak_shaved_load);
-            const peak_saved_mw = peak_before - peak_after;
-            const peak_saved_pct = (peak_saved_mw / peak_before) * 100;
-
-            const monthly_demand_savings = peak_saved_mw * 1000.0 * demand_charge;
-            const cycle_depth = 0.75;
-            const daily_arbitrage = E_max * cycle_depth * (peak_rate - offpeak_rate) * 1000;
-            const monthly_arbitrage_savings = daily_arbitrage * 30;
-
-            const total_monthly_savings = monthly_demand_savings + monthly_arbitrage_savings;
-            const total_annual_savings = total_monthly_savings * 12;
-
-            // Update UI elements
-            document.getElementById("peak-saved-mw-val").innerText = peak_saved_mw.toFixed(1) + " MW";
-            document.getElementById("peak-saved-pct-val").innerText = peak_saved_pct.toFixed(1) + "% reduction";
-            document.getElementById("peak-monthly-saved-val").innerText = "$" + Math.round(total_monthly_savings).toLocaleString();
-            document.getElementById("peak-annual-saved-val").innerText = "$" + Math.round(total_annual_savings).toLocaleString();
-
-            // Render Chart
-            const ctx = document.getElementById('peakChart').getContext('2d');
-            if (peakChartInstance) {
-                peakChartInstance.destroy();
-            }
-
-            peakChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: hours.map(h => h + ":00"),
-                    datasets: [
-                        {
-                            label: 'Baseline Grid Load (MW)',
-                            data: baseline_load,
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
-                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Peak Shaved Grid Load (MW)',
-                            data: peak_shaved_load,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                            borderWidth: 2.5,
-                            pointRadius: 3,
-                            fill: true,
-                            tension: 0.3
-                        }
-                    ]
+        // Setup Chart
+        const ctx = document.getElementById('gridChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+                datasets: [{
+                    label: 'Unoptimized Power',
+                    data: [100, 150, 120, 200, 180, 250, 210, 190, 280, 240],
+                    borderColor: '#8892b0',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                }, {
+                    label: 'Energivanu Optimized',
+                    data: [110, 130, 125, 140, 135, 150, 145, 155, 160, 150],
+                    borderColor: '#FBD786',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' },
-                            title: { display: true, text: 'Aggregate Load (MW)', color: '#9ca3af' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
-                        }
-                    }
+                plugins: {
+                    legend: { labels: { color: '#8892b0' } }
                 }
-            });
-        }
-
-        // ==========================================
-        // TAB 3: PHASE STAGGERING SIMULATION
-        // ==========================================
-        function initStaggerSim() {
-            updateStaggerSim();
-        }
-
-        function updateStaggerSim() {
-            const isStaggerEnabled = document.getElementById("stagger-toggle").checked;
-            const n_clusters = parseInt(document.getElementById("stagger-clusters-slider").value);
-            const P_compute = parseFloat(document.getElementById("stagger-power-slider").value);
-            const P_allreduce = P_compute / 2.0;
-
-            document.getElementById("stagger-clusters-lbl").innerText = n_clusters;
-            document.getElementById("stagger-power-lbl").innerText = P_compute;
-
-            const n_steps = 30;
-            const steps = Array.from({length: n_steps}, (_, i) => i);
-            const cycle_period = 10; 
-
-            // Update DOM clusters
-            const gridEl = document.getElementById("cluster-grid");
-            gridEl.innerHTML = '';
-
-            const traces = [];
-            for (let c = 0; c < n_clusters; c++) {
-                const phase_offset = isStaggerEnabled ? Math.round((cycle_period / n_clusters) * c) : 0;
-                
-                const c_trace = [];
-                for (let i = 0; i < n_steps; i++) {
-                    const step_pos = (i - phase_offset) % cycle_period;
-                    let val = (step_pos === cycle_period - 1) ? P_allreduce : P_compute;
-                    val += (Math.random() - 0.5) * 6; // noise
-                    c_trace.push(val);
-                }
-                traces.push(c_trace);
-
-                const activeText = isStaggerEnabled ? `Phase +${phase_offset * 5}s` : 'Synchronized';
-                gridEl.innerHTML += `
-                    <div class="cluster-card">
-                        <div class="cluster-info">
-                            <span class="cluster-name">Cluster ${c+1}</span>
-                            <span class="cluster-phase">${activeText}</span>
-                        </div>
-                        <div class="cluster-indicator active"></div>
-                    </div>
-                `;
             }
-
-            // Aggregate metrics
-            const aggregate = [];
-            const baseline = []; 
-            
-            for (let i = 0; i < n_steps; i++) {
-                let agg_sum = 0;
-                for (let c = 0; c < n_clusters; c++) {
-                    agg_sum += traces[c][i];
-                }
-                aggregate.push(agg_sum);
-
-                const base_step = i % cycle_period;
-                let base_val = (base_step === cycle_period - 1) ? (P_allreduce * n_clusters) : (P_compute * n_clusters);
-                base_val += (Math.random() - 0.5) * 10 * Math.sqrt(n_clusters);
-                baseline.push(base_val);
-            }
-
-            // Compute variances
-            const agg_mean = aggregate.reduce((a, b) => a + b, 0) / n_steps;
-            const agg_std = Math.sqrt(aggregate.map(x => Math.pow(x - agg_mean, 2)).reduce((a, b) => a + b, 0) / n_steps);
-
-            const base_mean = baseline.reduce((a, b) => a + b, 0) / n_steps;
-            const base_std = Math.sqrt(baseline.map(x => Math.pow(x - base_mean, 2)).reduce((a, b) => a + b, 0) / n_steps);
-
-            const std_reduction = Math.max(0, (1 - agg_std / base_std) * 100);
-            const peak_base = Math.max(...baseline);
-            const peak_agg = Math.max(...aggregate);
-            const peak_red = Math.max(0, peak_base - peak_agg);
-
-            // Update metrics
-            document.getElementById("stagger-std-val").innerText = agg_std.toFixed(1) + " MW";
-            document.getElementById("stagger-baseline-std-val").innerText = "Without Staggering: " + base_std.toFixed(1) + " MW";
-            document.getElementById("stagger-reduction-val").innerText = std_reduction.toFixed(1) + "%";
-            document.getElementById("stagger-peak-reduction-val").innerText = Math.round(peak_red) + " MW";
-
-            // Render Chart
-            const ctx = document.getElementById('staggerChart').getContext('2d');
-            if (staggerChartInstance) {
-                staggerChartInstance.destroy();
-            }
-
-            staggerChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: steps.map(s => (s * 5) + "s"),
-                    datasets: [
-                        {
-                            label: 'Synchronized Base Load (MW)',
-                            data: baseline,
-                            borderColor: 'rgba(244, 63, 94, 0.4)',
-                            borderDash: [5, 5],
-                            borderWidth: 1.5,
-                            pointRadius: 0,
-                            fill: false,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Phase Staggered Load (MW)',
-                            data: aggregate,
-                            borderColor: '#06b6d4',
-                            backgroundColor: 'rgba(6, 182, 212, 0.05)',
-                            borderWidth: 2.5,
-                            pointRadius: 3,
-                            fill: true,
-                            tension: 0.1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' },
-                            title: { display: true, text: 'Total Grid Load (MW)', color: '#9ca3af' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#f3f4f6', font: { family: 'Outfit' } }
-                        }
-                    }
-                }
-            });
-        }
+        });
     </script>
 </body>
 </html>

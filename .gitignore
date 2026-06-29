@@ -54,3 +54,7 @@ kaggle_results/validation_output/
 !README.md
 !WHITEPAPER.md
 !docs/WHITEPAPER.md
+
+# Ignore local temporary image files
+*.jfif
+ChatGPT Image*.png

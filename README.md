@@ -3,7 +3,7 @@
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue" alt="Python Support"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License"></a>
-  <a href="src/energivanu/model.py"><img src="https://img.shields.io/badge/parameters-338K-blueviolet" alt="Model Size"></a>
+  <a href="src/energivanu/model.py"><img src="https://img.shields.io/badge/parameters-613K-blueviolet" alt="Model Size"></a>
   <a href="https://github.com/mysterious75/Energivanu/actions"><img src="https://img.shields.io/github/actions/workflow/status/mysterious75/Energivanu/ci.yml?branch=main" alt="CI Status"></a>
 </p>
 
@@ -26,6 +26,27 @@ Try the interactive optimization simulator directly in your browser:
 ## 💡 Key Performance Benchmarks
 
 All simulation metrics listed below are fully reproducible out-of-the-box. Run `python verify_claims.py` to regenerate the baseline reports.
+
+### 🏆 Alibaba GPU Trace Training (Latest — June 2026)
+
+Trained on **30 lakh rows** of real GPU telemetry from Alibaba data centers (6,500 GPUs).
+
+| Metric | Value |
+|--------|-------|
+| **Dataset** | Alibaba GPU Trace 2020 (CC BY 4.0) |
+| **Data Rows** | 30,33,232 (real GPU utilization) |
+| **Model** | TCN + Attention, **613,612 params** |
+| **Val Loss** | **5.95** |
+| **MAPE** | **~21%** |
+| **Overfitting Gap** | <3% (no overfitting) |
+| **GPU** | Tesla P100 (CUDA) |
+| **Training Time** | ~45 min (200 epochs, early stopped) |
+
+**Progression:** 300K rows (MAPE 75%) → 50L rows (MAPE 37%) → **30L raw sensor (MAPE 21%)**
+
+See [`alibaba-training/`](alibaba-training/) for full training documentation.
+
+---
 
 ### 📊 Verification Metrics (Out-of-the-Box Demo Model)
 *   **BESS Battery Grid Smoothing**: **30.0%** reduction in standard deviation (verified via [MPCController](file:///D:/hacker/energivanu/src/energivanu/mpc.py#L36) on a 30-step sinusoidal trace).

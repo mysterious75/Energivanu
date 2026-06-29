@@ -84,7 +84,7 @@ _DATA_EXTENSIONS: Set[str] = {
 _SKIP_DIRS: Set[str] = {
     ".git", "__pycache__", ".mypy_cache", ".pytest_cache",
     "node_modules", ".venv", "venv", "env", ".eggs",
-    "*.egg-info", "build", "dist",
+    "*.egg-info", "build", "dist", "alibaba", "data",
 }
 
 # Files/directories that are documentation-only and may legitimately
@@ -117,6 +117,12 @@ _EXCLUDE_PATHS: Set[str] = {
     "src/energivanu/data.py",
     "src/energivanu/data/h100_processor.py",
     "src/energivanu/data/alibaba_processor.py",
+    "WHITEPAPER.md",
+    "docs/WHITEPAPER.md",
+    "magazine.html",
+    "docs/magazine.html",
+    "whitepaper.html",
+    "docs/whitepaper.html",
 }
 
 # NC-only Python packages (hypothetical — extend as needed)
@@ -262,7 +268,7 @@ class ComplianceScanner:
                 continue
             # Skip excluded paths (documentation files that legitimately
             # reference NC datasets for informational purposes)
-            rel = str(path.relative_to(self._root))
+            rel = path.relative_to(self._root).as_posix()
             if any(rel.startswith(excl) or rel == excl for excl in _EXCLUDE_PATHS):
                 continue
             if path.is_file():

@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-06-29T01:54:55.835927",
+  "status": "COMPLETE",
+  "device": "cuda",
+  "gpu": "Tesla P100-PCIE-16GB",
+  "data_source": "Alibaba GPU Trace 2020 (CC BY 4.0)",
+  "data_rows": 5042655,
+  "train_samples": 428622,
+  "val_samples": 75640,
+  "model_params": 338252,
+  "epochs_run": 50,
+  "epochs_max": 200,
+  "early_stopped": true,
+  "best_val_loss": 34.588194,
+  "best_val_mape": 37.28,
+  "final_train_loss": 33.774036,
+  "final_val_loss": 34.852219,
+  "overfitting_gap_pct": 2.6,
+  "training_time_s": 1345,
+  "mpc_peak_reduction_mw": 6.36,
+  "mpc_grid_smoothness_pct": 0.0
+}

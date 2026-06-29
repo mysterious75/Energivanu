@@ -40,7 +40,7 @@ class MagazinePDF(FPDF):
         self.set_fill_color(*DARK_BG)
         self.rect(0, 0, 210, 297, 'F')
 
-    def top_bar(self, section_name, page_num):
+    def top_bar(self, section_name, page_num=None):
         # Red top bar
         self.set_fill_color(*RED)
         self.rect(0, 0, 210, 3, 'F')
@@ -52,7 +52,7 @@ class MagazinePDF(FPDF):
         # Page number
         self.set_text_color(*DARK_GRAY)
         self.set_xy(175, 8)
-        self.cell(0, 5, f'{page_num:02d}', ln=False, align='R')
+        self.cell(0, 5, f'{int(page_num):02d}' if page_num else '', ln=False, align='R')
         # Separator line
         self.set_draw_color(40, 40, 40)
         self.line(20, 14, 190, 14)
@@ -274,7 +274,7 @@ def build_magazine():
 
     # ==================== PAGE 2: TABLE OF CONTENTS ====================
     pdf.dark_page()
-    pdf.top_bar('Energivanu', 1)
+    pdf.top_bar('Energivanu', '')
 
     y = pdf.section_title('Inside This Issue', 'A deep dive into the technology, the market, and the mission.')
     y += 5
@@ -316,7 +316,7 @@ def build_magazine():
 
     # ==================== PAGE 3: THE PROBLEM ====================
     pdf.dark_page()
-    pdf.top_bar('The Problem', 2)
+    pdf.top_bar('The Problem', 1)
 
     y = pdf.section_title('The $47 Billion Problem', "AI's insatiable appetite for power is creating a crisis that grid operators can no longer ignore.")
     y = pdf.lead_text("When ERCOT approved the Passive Controllable Load Resource framework on June 18, 2026, it wasn't just creating a new regulatory category  -  it was acknowledging a fundamental shift in how the electrical grid interacts with the largest power consumers on the planet.", y)
@@ -361,7 +361,7 @@ def build_magazine():
 
     # ==================== PAGE 4: ENTER ENERGIVANU ====================
     pdf.dark_page()
-    pdf.top_bar('The Solution', 3)
+    pdf.top_bar('The Solution', 2)
 
     y = pdf.section_title('Enter Energivanu', 'The open-source execution engine that fills the gap between grid signals and GPU clusters.')
     y = pdf.lead_text("Energivanu is what happens when you treat data center power optimization as a machine learning problem instead of a facilities management problem. The result is a 613,000-parameter neural network that can predict power spikes, dispatch battery storage, and stagger training phases  -  all in under 21 seconds.", y)
@@ -392,7 +392,7 @@ def build_magazine():
 
     pdf.footer_bar()
     pdf.dark_page()
-    pdf.top_bar('The Solution - Cont.', 4)
+    pdf.top_bar('The Solution - Cont.', 3)
     y = 20
     y = pdf.heading2('Three Engines, One Pipeline', y)
 
@@ -443,7 +443,7 @@ def build_magazine():
 
     # ==================== PAGE 6: TRAINING ====================
     pdf.dark_page()
-    pdf.top_bar('Training', 5)
+    pdf.top_bar('Training', 6)
 
     y = pdf.section_title('Training on 30 Lakh Rows', 'From 8,438% error to 20.3%  -  the iterative journey of building a production-grade prediction model.')
     y = pdf.lead_text("The Alibaba GPU Trace 2020 dataset contains telemetry from 6,500 GPUs across real data center operations. It's the largest publicly available GPU power dataset with a commercial-friendly CC BY 4.0 license.", y)
@@ -474,7 +474,7 @@ def build_magazine():
 
     # ==================== PAGE 7: VERIFIED PERFORMANCE ====================
     pdf.dark_page()
-    pdf.top_bar('Validation', 6)
+    pdf.top_bar('Validation', 7)
 
     y = pdf.section_title('Verified Performance', 'Real hardware. Real data. Real results. Every metric reproducible.')
 
@@ -490,7 +490,7 @@ def build_magazine():
 
     pdf.footer_bar()
     pdf.dark_page()
-    pdf.top_bar('Validation - Cont.', 7)
+    pdf.top_bar('Validation - Cont.', 8)
     y = 20
     y = pdf.heading2('Real Hardware Validation', y)
     pdf.simple_table(
@@ -516,7 +516,7 @@ def build_magazine():
 
     # ==================== PAGE 8: COMPETITIVE LANDSCAPE ====================
     pdf.dark_page()
-    pdf.top_bar('Competition', 7)
+    pdf.top_bar('Competition', 9)
 
     y = pdf.section_title('The Competitive Edge', "Energivanu isn't the first  -  but it's the only one combining all three capabilities in one open-source package.")
 
@@ -542,7 +542,7 @@ def build_magazine():
 
     pdf.footer_bar()
     pdf.dark_page()
-    pdf.top_bar('Competition - Cont.', 8)
+    pdf.top_bar('Competition - Cont.', 10)
     y = 20
     y = pdf.heading2('The Open-Source Advantage', y)
     y = pdf.body_text("Proprietary solutions from Emerald AI and Phaidra require vendor lock-in and six-figure contracts. Energivanu is AGPLv3  -  free to use, modify, and deploy. For data center operators who want PCLR compliance without surrendering control, it's the only option.", y)
@@ -564,7 +564,7 @@ def build_magazine():
 
     # ==================== PAGE 9: MARKET & OPPORTUNITY ====================
     pdf.dark_page()
-    pdf.top_bar('Market', 8)
+    pdf.top_bar('Market', 11)
 
     y = pdf.section_title('Market & Opportunity', 'The convergence of AI scaling, grid constraints, and regulation creates a once-in-a-generation opportunity.')
     y = pdf.lead_text("The data center power optimization market sits at the intersection of three unstoppable forces: the exponential growth of AI compute, the physical limits of electrical grids, and the regulatory frameworks emerging to manage the collision.", y)
@@ -588,7 +588,7 @@ def build_magazine():
 
     pdf.footer_bar()
     pdf.dark_page()
-    pdf.top_bar('Market - Cont.', 9)
+    pdf.top_bar('Market - Cont.', 12)
     y = 20
     y = pdf.heading2('Revenue Model', y)
     pdf.simple_table(
@@ -610,7 +610,7 @@ def build_magazine():
 
     # ==================== PAGE 10: ROAD AHEAD ====================
     pdf.dark_page()
-    pdf.top_bar('Future', 9)
+    pdf.top_bar('Future', 13)
 
     y = pdf.section_title('The Road Ahead', 'From Kaggle notebooks to production data centers  -  the path from validated prototype to deployed system.')
     y = pdf.lead_text("Energivanu has proven the concept. The models train, the controllers optimize, the signals parse, and the numbers are verified. The next chapter is about closing the gap between simulation and production.", y)
@@ -645,7 +645,7 @@ def build_magazine():
 
     pdf.footer_bar()
     pdf.dark_page()
-    pdf.top_bar('Future - Cont.', 10)
+    pdf.top_bar('Future - Cont.', 14)
     y = 20
     y = pdf.heading2('The Vision', y)
     y = pdf.body_text("Energivanu's long-term vision is simple: every GPU data center should have an intelligent power management layer. Not as a luxury, not as a regulatory checkbox, but as fundamental infrastructure  -  as essential as networking or cooling.", y)

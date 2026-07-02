@@ -28,6 +28,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,11 +37,24 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau
 from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data.distributed import DistributedSampler
 
 from .config import EnergivanuConfig, get_config
+from .distributed import (
+    cleanup,
+    get_device,
+    get_local_rank,
+    get_rank,
+    get_world_size,
+    is_distributed,
+    is_main_process,
+    save_checkpoint,
+    setup as ddp_setup,
+)
 from .logging_config import get_logger, setup_logging, timed
 from .model import EnergivanuPEB
 
@@ -237,6 +251,13 @@ def _generate_synthetic_data(
     )
 
 
+def _get_sampler(dataset: Dataset, shuffle: bool):
+    """Return a DistributedSampler if distributed, else None."""
+    if is_distributed():
+        return DistributedSampler(dataset, shuffle=shuffle)
+    return None
+
+
 def build_commercial_dataloaders(
     cfg: EnergivanuConfig,
     sources: Optional[List[str]] = None,
@@ -321,10 +342,14 @@ def build_commercial_dataloaders(
         generator=torch.Generator().manual_seed(42),
     )
 
+    train_sampler = _get_sampler(train_ds, shuffle=True)
+    val_sampler = _get_sampler(val_ds, shuffle=False)
+
     train_loader = DataLoader(
         train_ds,
         batch_size=cfg.training.batch_size,
-        shuffle=True,
+        shuffle=(train_sampler is None),
+        sampler=train_sampler,
         num_workers=0,
         pin_memory=True,
     )
@@ -332,6 +357,7 @@ def build_commercial_dataloaders(
         val_ds,
         batch_size=cfg.training.batch_size,
         shuffle=False,
+        sampler=val_sampler,
         num_workers=0,
         pin_memory=True,
     )
@@ -443,6 +469,7 @@ def train_commercial(
     config_path: Optional[str] = None,
     sources: Optional[List[str]] = None,
     resume_path: Optional[str] = None,
+    distributed: bool = False,
 ) -> Dict[str, float]:
     """
     Full commercial-safe training pipeline.
@@ -467,14 +494,37 @@ def train_commercial(
     setup_logging()
     cfg = get_config(config_path)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info("training started", extra={"device": str(device), "mode": "commercial"})
+    # Initialize DDP if requested
+    ddp_enabled = distributed and ddp_setup()
+    world_size = get_world_size()
+    rank = get_rank()
+    local_rank = get_local_rank()
+    device = get_device()
+
+    logger.info(
+        "training started",
+        extra={
+            "device": str(device),
+            "mode": "commercial",
+            "distributed": ddp_enabled,
+            "world_size": world_size,
+            "rank": rank,
+        },
+    )
+
+    # Scale batch size for distributed training
+    if ddp_enabled and world_size > 1:
+        cfg.training.batch_size = max(1, cfg.training.batch_size // world_size)
+        logger.info(
+            "batch size scaled for distributed training",
+            extra={"per_gpu_batch": cfg.training.batch_size, "world_size": world_size},
+        )
 
     # Build dataloaders
     train_loader, val_loader, manifest = build_commercial_dataloaders(cfg, sources)
 
     # Initialize model
-    model = EnergivanuPEB(
+    raw_model = EnergivanuPEB(
         n_features=cfg.model.n_features,
         seq_len=cfg.model.seq_len,
         pred_horizon=cfg.model.pred_horizon,
@@ -487,14 +537,21 @@ def train_commercial(
         dropout=cfg.model.dropout,
     ).to(device)
 
-    param_count = model.count_parameters()
+    param_count = raw_model.count_parameters()
     logger.info("model initialized", extra={"parameters": param_count})
+
+    # Wrap with DDP if distributed
+    model = raw_model
+    if ddp_enabled:
+        model = DDP(raw_model, device_ids=[local_rank] if torch.cuda.is_available() else None)
+        logger.info("model wrapped with DDP", extra={"local_rank": local_rank})
 
     # Resume from checkpoint if specified
     start_epoch = 0
     if resume_path and Path(resume_path).exists():
         ckpt = torch.load(resume_path, map_location=device, weights_only=False)
-        model.load_state_dict(ckpt["model_state_dict"])
+        inner_model = model.module if ddp_enabled else model
+        inner_model.load_state_dict(ckpt["model_state_dict"])
         start_epoch = ckpt.get("epoch", 0) + 1
         logger.info("resumed from checkpoint", extra={"path": resume_path, "epoch": start_epoch})
 
@@ -549,6 +606,10 @@ def train_commercial(
     for epoch in range(start_epoch, cfg.training.epochs):
         t0 = time.time()
 
+        # Set epoch for distributed sampler
+        if ddp_enabled and hasattr(train_loader.sampler, "set_epoch"):
+            train_loader.sampler.set_epoch(epoch)
+
         # Train
         train_loss, train_mape = _train_epoch(
             model, train_loader, optimizer, power_loss_fn, signal_loss_fn,
@@ -593,8 +654,9 @@ def train_commercial(
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
-            torch.save({
-                "model_state_dict": model.state_dict(),
+            inner_model = model.module if ddp_enabled else model
+            save_checkpoint({
+                "model_state_dict": inner_model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "epoch": epoch,
                 "val_loss": val_loss,
@@ -645,6 +707,10 @@ def train_commercial(
     }
 
     logger.info("training complete", extra=results)
+
+    if ddp_enabled:
+        cleanup()
+
     return results
 
 
@@ -653,7 +719,14 @@ def train_commercial(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    """CLI entry point for commercial training."""
+    """CLI entry point for commercial training.
+
+    For single-GPU training:
+        python -m energivanu.train_commercial
+
+    For multi-GPU training (requires ``torchrun``):
+        torchrun --nproc_per_node=N python -m energivanu.train_commercial --distributed
+    """
     parser = argparse.ArgumentParser(
         description="Train Energivanu PEB model on commercial-safe data only.",
     )
@@ -669,25 +742,31 @@ def main() -> None:
         "--resume", type=str, default=None,
         help="Path to checkpoint to resume training from",
     )
+    parser.add_argument(
+        "--distributed", action="store_true",
+        help="Enable distributed training (requires torchrun or env vars)",
+    )
     args = parser.parse_args()
 
     results = train_commercial(
         config_path=args.config,
         sources=args.sources,
         resume_path=args.resume,
+        distributed=args.distributed,
     )
 
-    print("\n" + "=" * 60)
-    print("COMMERCIAL TRAINING COMPLETE")
-    print("=" * 60)
-    print(f"  Best val loss:    {results['best_val_loss']:.6f}")
-    print(f"  Best val MAPE:    {results['best_val_mape']:.2f}%")
-    print(f"  Best epoch:       {results['best_epoch']}")
-    print(f"  Total epochs:     {results['total_epochs']}")
-    print(f"  Parameters:       {results['parameters']:,}")
-    print(f"  Data sources:     {results['data_sources']}")
-    print(f"  Commercial safe:  {results['commercial_safe']}")
-    print("=" * 60)
+    if is_main_process():
+        print("\n" + "=" * 60)
+        print("COMMERCIAL TRAINING COMPLETE")
+        print("=" * 60)
+        print(f"  Best val loss:    {results['best_val_loss']:.6f}")
+        print(f"  Best val MAPE:    {results['best_val_mape']:.2f}%")
+        print(f"  Best epoch:       {results['best_epoch']}")
+        print(f"  Total epochs:     {results['total_epochs']}")
+        print(f"  Parameters:       {results['parameters']:,}")
+        print(f"  Data sources:     {results['data_sources']}")
+        print(f"  Commercial safe:  {results['commercial_safe']}")
+        print("=" * 60)
 
 
 if __name__ == "__main__":

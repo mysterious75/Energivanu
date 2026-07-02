@@ -11,6 +11,10 @@ All notable changes to Energivanu are documented here.
 - `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`
 - GitHub issue templates (bug report, feature request) and PR template
 - CI/CD badge and test count badge in README
+- **Multi-GPU DDP training** (`src/energivanu/distributed.py`)
+  - `torchrun`-compatible: `torchrun --nproc_per_node=N -m energivanu.train_commercial --distributed`
+  - `DistributedSampler`, automated batch size scaling, rank-aware checkpoint saving
+  - Works seamlessly in single-GPU mode (no flags needed)
 
 ### Changed
 - README test count updated from 13 to 103 passing, 8 skipped

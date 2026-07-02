@@ -25,6 +25,13 @@ def __getattr__(name):
         "ERCOTSCEDClient": ".grid",
         "SCEDSignal": ".grid",
     }
+    _lazy_map.update({
+        "setup_distributed": ".distributed",
+        "cleanup_distributed": ".distributed",
+        "is_main_process": ".distributed",
+        "get_device": ".distributed",
+        "save_checkpoint": ".distributed",
+    })
     if name in _lazy_map:
         import importlib
         mod = importlib.import_module(_lazy_map[name], __name__)

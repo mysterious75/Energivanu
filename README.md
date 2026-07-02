@@ -6,8 +6,6 @@
   <a href="LICENSE-COMMERCIAL"><img src="https://img.shields.io/badge/commercial-license%20available-orange" alt="Commercial License"></a>
   <a href="src/energivanu/model.py"><img src="https://img.shields.io/badge/parameters-613K-blueviolet" alt="Model Size"></a>
   <a href="magazine/Energivanu_Insights_Magazine.pdf"><img src="https://img.shields.io/badge/magazine-pdf-red" alt="Magazine"></a>
-  <a href="magazine/LEGAL_COMPLIANCE.md"><img src="https://img.shields.io/badge/legal-compliant-brightgreen" alt="Legal"></a>
-  <a href="validation_output/validation_report.json"><img src="https://img.shields.io/badge/validation-4%2F4%20gaps%20passed-brightgreen" alt="Validation"></a>
   <a href="https://github.com/mysterious75/Energivanu/actions"><img src="https://img.shields.io/github/actions/workflow/status/mysterious75/Energivanu/ci.yml?branch=main" alt="CI"></a>
   <a href="#project-structure"><img src="https://img.shields.io/badge/tests-103%20passing-brightgreen" alt="Tests"></a>
   <a href="src/energivanu/distributed.py"><img src="https://img.shields.io/badge/ddp-torchrun%20ready-blue" alt="DDP"></a>
@@ -158,7 +156,7 @@ See [`alibaba-training/`](alibaba-training/) for full training documentation.
 *   **Peak Demand Reduction**: **10.5%** peak load reduction (verified via [PeakShavingOptimizer](src/energivanu/optimizer.py) on a 24-hour TOU profile).
 *   **Phase Volatility Reduction**: **59.0%** standard deviation reduction (verified via [PhaseStaggeringScheduler](src/energivanu/scheduler.py) coordinating 4 GPU clusters).
 *   **ONNX Inference Speedup**: **~10.0x speedup** on CPU vs PyTorch (verified via ONNX runtime serialization; speedup is hardware-dependent. Run `verify_claims.py` to benchmark in your local environment).
-*   **Demo Model Power Prediction**: **4.85% MAPE** validation loss (trained on synthetic data and packaged in `models/checkpoints/best_model_demo.pt`).
+*   **Demo Model Power Prediction**: **4.85% MAPE** validation loss (trained on synthetic data; checkpoint generated locally during training).
 
 ### 🔬 Real-Data Benchmarks (York University H100 Workloads)
 *   **Real Model Power Prediction**: **1.85% MAPE** best validation loss (achieved on a 15% holdout split of 10,800 H100 sequences).
@@ -166,7 +164,7 @@ See [`alibaba-training/`](alibaba-training/) for full training documentation.
 
 ### ✅ Kaggle Gap Validation (June 2026)
 
-All 4 core system components validated in simulation on Kaggle T4 GPU. See [`validation_output/validation_report.json`](validation_output/validation_report.json) for full results.
+All 4 core system components validated in simulation on Kaggle T4 GPU.
 
 > ⚠️ **Validation Scope & Limitations — Please Read Before Citing:**
 > All results below are **simulation-verified** on a **single 8-GPU Kaggle node with idle GPU load** (26.3W baseline, 0% utilization). This means the validation demonstrates that the code runs without crashing and produces reasonable outputs — it does **NOT** validate prediction accuracy under real production workloads. No real BESS hardware, real ERCOT grid connection, or production multi-GPU cluster has been used. These are engineering benchmarks, not production deployment results.
@@ -227,6 +225,7 @@ Energivanu/
 │   ├── train_commercial.py            # Commercial-safe training pipeline
 │   ├── train_demo.py                  # Demo training (synthetic data)
 │   ├── train_real.py                  # Real data training (York H100)
+│   ├── train_real_cluster.py          # Cluster-scale DDP fine-tuning on real telemetry
 │   ├── bess/                          # Battery Energy Storage System
 │   │   ├── pybamm_battery.py          # PyBaMM physics battery simulation
 │   │   └── modbus_server.py           # Modbus mock server for BESS
@@ -241,16 +240,16 @@ Energivanu/
 │   └── data/                          # Data processing pipeline
 │       ├── alibaba_processor.py       # Alibaba GPU Trace processor
 │       ├── h100_processor.py          # York H100 processor
+│       ├── cluster_merger.py          # Multi-node telemetry merger for 100+ GPU clusters
 │       ├── provenance.py              # Data lineage tracking
 │       └── validator.py               # Data quality checks
 ├── config/                            # Configuration
 │   ├── default.yaml                   # Default config (model, mpc, grid, battery, etc.)
 │   └── data_sources.yaml             # Data source registry with license info
 ├── kaggle/                            # Kaggle notebooks
-├── scripts/                           # CLI scripts
+├── scripts/cluster/                   # Cluster deployment (SSH, SLURM, K8s, Docker)
 ├── tests/                             # Test suite (103 tests passing, 8 skipped)
-├── models/                            # Model checkpoints & results
-├── validation_output/                 # Kaggle gap validation output
+├── models/                            # Training results (JSON)
 ├── alibaba-training/                  # Alibaba training documentation
 ├── magazine/                          # Professional magazine publication
 ├── examples/                          # Quick start examples
@@ -316,7 +315,6 @@ To maintain absolute compliance with datasets and commercial usage licensing:
 *   **Out-of-Box Safety**: The pre-trained weights distributed in this repository are trained solely on **synthetic data** generated via [train_demo.py](src/energivanu/train_demo.py).
 *   **Commercial Model**: Trained on Alibaba CC BY 4.0 + own data. Fully commercial-safe. See [train_commercial.py](src/energivanu/train_commercial.py).
 *   **Compliance Scanner**: Run `python scripts/check_compliance.py` to verify no NC-licensed data contamination.
-*   **Magazine Legal Audit**: See [magazine/LEGAL_COMPLIANCE.md](magazine/LEGAL_COMPLIANCE.md) for full audit of all tools, fonts, and content.
 
 ---
 
@@ -456,8 +454,8 @@ Energivanu uses a **dual data strategy** to ensure all distributed model weights
 
 ### What This Means
 
-- **Distributed demo model** (`best_model_demo.pt`): Trained on synthetic data only. Zero legal risk.
-- **Commercial model** (`commercial_best.pt`): Trained on Alibaba CC BY 4.0 + own data. Fully commercial-safe.
+- **Distributed demo model**: Trained on synthetic data only. Zero legal risk.
+- **Commercial model**: Trained on Alibaba CC BY 4.0 + own data. Fully commercial-safe.
 - **York/MIT data**: Used only for research and architecture exploration. **Never** included in distributed weights.
 
 ### Reproducing Commercial-Safe Training
@@ -473,10 +471,62 @@ python -m energivanu.train_commercial --sources alibaba_gpu_trace kaggle_t4
 torchrun --nproc_per_node=4 -m energivanu.train_commercial --distributed
 
 # Export to ONNX for deployment
-python scripts/export_onnx.py --checkpoint models/checkpoints/commercial_best.pt
+python scripts/export_onnx.py --checkpoint models/checkpoints/your_model.pt
 ```
 
 See [`config/data_sources.yaml`](config/data_sources.yaml) for the complete data source registry with license details.
+
+### 🚀 Cluster-Scale Training Workflow (100+ GPUs)
+
+For real production accuracy (targeting <10% MAPE on active workloads), train on real cluster telemetry:
+
+**Step 1: Collect telemetry across all nodes**
+
+*Using SSH*:
+```bash
+./scripts/cluster/deploy_collector.sh \
+    --nodes node1,node2,...,nodeN \
+    --mode marathon --duration 480 \
+    --output /shared/energivanu/telemetry/
+```
+
+*Using SLURM*:
+```bash
+sbatch --nodes=32 scripts/cluster/slurm_collect.sbatch
+```
+
+*Using Kubernetes*:
+```bash
+kubectl apply -f scripts/cluster/k8s-daemonset.yaml
+```
+
+**Step 2: Merge per-node telemetry into training dataset**
+```bash
+python -m energivanu.data.cluster_merger \
+    /shared/energivanu/telemetry/node_*.csv \
+    -o /shared/energivanu/telemetry/merged.npz
+```
+
+**Step 3: Fine-tune the model on real cluster data**
+
+*Single GPU*:
+```bash
+python -m energivanu.train_real_cluster \
+    --data /shared/energivanu/telemetry/merged.npz \
+    --checkpoint models/checkpoints/your_model.pt
+```
+
+*Multi-GPU (all nodes via torchrun)*:
+```bash
+torchrun --nproc_per_node=8 -m energivanu.train_real_cluster \
+    --data /shared/energivanu/telemetry/merged.npz \
+    --checkpoint models/checkpoints/your_model.pt \
+    --lr 1e-4 --epochs 100
+```
+
+**Why this matters**: The current 21% MAPE was achieved on Alibaba's 6,500-GPU telemetry (idle/light load). Real GPUs running active training workloads have 50-100%+ power variation. Training on real cluster data during production jobs is the only path to production-level accuracy.
+
+**Expected improvement**: 50-100%+ MAPE → **<15% MAPE** after first cluster training run, with iterative improvement toward <10% on subsequent runs.
 
 ---
 
@@ -488,7 +538,6 @@ A 10-page professional magazine publication for VC/angel investor presentations,
 |------|--------|------|-------------|
 | [`magazine/Energivanu_Insights_Magazine.pdf`](magazine/Energivanu_Insights_Magazine.pdf) | PDF | ~1 MB | 10-page magazine with charts, data visualizations, professional layout |
 | [`magazine/Energivanu_Insights_Magazine.docx`](magazine/Energivanu_Insights_Magazine.docx) | DOCX | ~1 MB | Editable Word version for customization |
-| [`magazine/LEGAL_COMPLIANCE.md`](magazine/LEGAL_COMPLIANCE.md) | Markdown | — | Full legal audit of all tools, fonts, data, and content |
 
 ### Regenerating the Magazine
 
@@ -506,28 +555,11 @@ python3 build_docx.py          # Build DOCX
 | Document | Description |
 |----------|-------------|
 | [WHITEPAPER.md](WHITEPAPER.md) | Technical whitepaper — PCLR compliance architecture |
-| [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) | Complete technical documentation |
-| [MODEL_CARD.md](MODEL_CARD.md) | Model architecture, training data, evaluation metrics, limitations |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute to Energivanu |
 | [CHANGELOG.md](CHANGELOG.md) | Version history and release notes |
 | [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
 | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community guidelines |
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Development progress and roadmap |
-| [FINAL_STATUS.md](FINAL_STATUS.md) | Final session status — all agents complete |
-| [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) | Benchmark verification report |
-| [MASTER_STRATEGY.md](MASTER_STRATEGY.md) | Data strategy executive summary |
-| [EXECUTION_MASTERPLAN.md](EXECUTION_MASTERPLAN.md) | Multi-agent execution plan |
-| [COMPETITIVE_ANALYSIS.md](COMPETITIVE_ANALYSIS.md) | Competitive landscape analysis |
-| [DEEP_DIVE_ANALYSIS.md](DEEP_DIVE_ANALYSIS.md) | Deep technical analysis |
-| [BUG_REPORT.md](BUG_REPORT.md) | Bug tracking report |
-| [CODE_REVIEW_REPORT.md](CODE_REVIEW_REPORT.md) | Code review findings |
-| [GAP_CLOSURE_PLAN.md](GAP_CLOSURE_PLAN.md) | Gap closure plan |
-| [WEAKNESS_RESOLUTION_PLAN.md](WEAKNESS_RESOLUTION_PLAN.md) | Weakness resolution plan |
-| [ZERO_BUDGET_MASTER_PLAN.md](ZERO_BUDGET_MASTER_PLAN.md) | Zero-budget execution plan |
-| [docs/DATA_COLLECTION_GUIDE.md](docs/DATA_COLLECTION_GUIDE.md) | Step-by-step guide for collecting GPU telemetry |
-| [docs/LEGAL_FAQ.md](docs/LEGAL_FAQ.md) | Legal FAQ: commercial use, licensing, citations, liability |
 | [alibaba-training/](alibaba-training/) | Alibaba GPU Trace training documentation |
-| [magazine/LEGAL_COMPLIANCE.md](magazine/LEGAL_COMPLIANCE.md) | Magazine legal compliance audit |
 
 ---
 

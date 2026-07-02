@@ -10,6 +10,7 @@ Components:
 - :mod:`alibaba_processor` — Alibaba GPU Trace 2020 data processor
 - :mod:`validator` — Data quality validation
 - :mod:`provenance` — Data lineage tracking
+- :mod:`cluster_merger` — Multi-node telemetry merger for cluster-scale training
 """
 
 # Lazy imports to avoid requiring torch at package import time
@@ -27,6 +28,9 @@ def __getattr__(name):
     elif name == "AlibabaTraceProcessor":
         from .alibaba_processor import AlibabaTraceProcessor
         return AlibabaTraceProcessor
+    elif name == "ClusterMerger":
+        from .cluster_merger import ClusterMerger
+        return ClusterMerger
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 __all__ = [
@@ -36,4 +40,5 @@ __all__ = [
     "load_node_data",
     "scale_to_facility",
     "AlibabaTraceProcessor",
+    "ClusterMerger",
 ]

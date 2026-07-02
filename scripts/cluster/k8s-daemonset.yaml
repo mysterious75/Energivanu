@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# =============================================================================
+# Energivanu Collector — Kubernetes DaemonSet
+# =============================================================================
+# Deploys one collector pod on every GPU node in the cluster.
+#
+# Usage:
+#   kubectl apply -f scripts/cluster/k8s-daemonset.yaml
+#
+# This creates:
+#   - A DaemonSet running the collector on every node
+#   - A PVC for shared storage (all pods write to the same volume)
+#   - Configuration via ConfigMap for collection mode/duration
+#
+# After pods complete, merge telemetry:
+#   kubectl exec deploy/energivanu-merger -- python -m energivanu.data.cluster_merger \
+#       /data/node_*.csv -o /data/merged.npz
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: energivanu-collector-config
+  namespace: energivanu
+data:
+  COLLECT_MODE: "standard"
+  COLLECT_OUTPUT: "/data"
+  COLLECT_DURATION: ""
+  COLLECT_INTERVAL: ""
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: energivanu-collector
+  namespace: energivanu
+  labels:
+    app: energivanu-collector
+spec:
+  selector:
+    matchLabels:
+      app: energivanu-collector
+  template:
+    metadata:
+      labels:
+        app: energivanu-collector
+    spec:
+      nodeSelector:
+        nvidia.com/gpu.present: "true"  # only GPU nodes
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: collector
+          image: energivanu-collector:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "$(COLLECT_MODE)"
+            - "--output"
+            - "$(COLLECT_OUTPUT)/node_$(NODE_NAME).csv"
+          env:
+            - name: COLLECT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: energivanu-collector-config
+                  key: COLLECT_MODE
+            - name: COLLECT_OUTPUT
+              valueFrom:
+                configMapKeyRef:
+                  name: energivanu-collector-config
+                  key: COLLECT_OUTPUT
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          resources:
+            requests:
+              nvidia.com/gpu: 1
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: shared-data
+              mountPath: /data
+      restartPolicy: Never
+      volumes:
+        - name: shared-data
+          persistentVolumeClaim:
+            claimName: energivanu-shared-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: energivanu-shared-data
+  namespace: energivanu
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: nfs-client  # adjust for your cluster
